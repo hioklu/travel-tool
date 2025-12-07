@@ -448,6 +448,10 @@
                 </div>
                 <div><label class="text-xs text-textSub block mb-1">備註</label><textarea id="edit-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></textarea></div>
                 <div><label class="text-xs text-textSub block mb-1">Google Maps</label><input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
+                <div><label class="text-xs text-textSub block mb-2">相關連結 / 票券</label><div id="edit-event-links-container" class="space-y-2 mb-2"></div><button onclick="addEventLinkInput()" class="text-xs text-accent border border-accent/50 px-3 py-1.5 rounded-lg hover:bg-accent/10 transition flex items-center gap-1">
+        <i class="fa-solid fa-plus"></i> 新增連結
+    </button>
+</div>
                 <div class="flex items-center gap-2 pt-2"><input type="checkbox" id="edit-important" class="w-5 h-5 rounded bg-dark border-slate-600 text-accent"><label for="edit-important" class="text-sm text-white">標記為重要行程</label></div>
             </div>
             <div class="px-6 py-4 border-t border-white/10 flex-none flex gap-3 bg-card/50 backdrop-blur-md rounded-b-2xl">
@@ -708,6 +712,19 @@
             if(CURRENT_USER.isAnonymous) return alert("請先登入帳號");
             document.getElementById('new-trip-title').value=''; document.getElementById('new-trip-desc').value=''; document.getElementById('create-trip-modal').classList.remove('hidden'); 
         }
+        
+        // --- 新增：處理行程連結的輸入框 ---
+        function addEventLinkInput(title = '', url = '') {
+            const container = document.getElementById('edit-event-links-container');
+            const div = document.createElement('div');
+            div.className = 'flex gap-2 items-center animate-[fadeIn_0.2s_ease-out]';
+            div.innerHTML = `
+                <input type="text" class="link-title w-1/3 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white focus:border-accent outline-none" placeholder="標題 (Klook)" value="${title}">
+                <input type="text" class="link-url flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white focus:border-accent outline-none" placeholder="https://..." value="${url}">
+                <button onclick="this.parentElement.remove()" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-red-400 transition"><i class="fa-solid fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
 
         async function createNewTrip() {
             const title = document.getElementById('new-trip-title').value; const desc = document.getElementById('new-trip-desc').value;
@@ -923,33 +940,94 @@
             if(events.length === 0) { html += `<div class="flex flex-col items-center justify-center mt-20 text-slate-600 space-y-4"><i class="fa-regular fa-calendar-xmark text-4xl"></i><p>本日尚無行程</p></div>`; }
             else {
                 events.forEach(item => {
-                    const isImp = item.isImportant; const typeConfig = iconTypes[item.type] || iconTypes.star; const end = calculateEndTime(item.time, item.duration); const timeDisp = end ? `${item.time} - ${end}` : item.time; const durDisp = item.duration ? `<span class="opacity-60 ml-1">(${item.duration}m)</span>` : '';
-                    const clickAttr = IS_READ_ONLY ? '' : `onclick="openEditModal(${item.id})"`;
-                    const deleteAttr = IS_READ_ONLY ? '' : `onclick="deleteEventDirect(${item.id})"`;
-                    
-                    // Swipe Structure
-                    html += `
-                        <div class="flex gap-2 mb-4 group">  <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
-                                <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
-                                <div class="timeline-line"></div>
-                            </div>
-                             <div class="flex-1 min-w-0"> <div class="swipe-card-wrapper">
-                                    <div class="swipe-actions">
-                                        <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
-                                    </div>
-                                    <div class="swipe-content trip-card ${isImp ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between" ${clickAttr}>
-                                        <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}</div>
-                                        <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisp}</span>${durDisp}</div>
-                                        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-4 line-clamp-10">${item.desc || ''}</p>
-                                        <div class="mt-auto pt-2 flex gap-2">
-                                            ${item.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}" target="_blank" onclick="event.stopPropagation()" class="flex-1 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-lg py-2 text-center text-xs font-bold text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-location-arrow text-slate-300"></i> 導航</a>` : ''}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                });
+    const isImp = item.isImportant;
+    const typeConfig = iconTypes[item.type] || iconTypes.star;
+    const end = calculateEndTime(item.time, item.duration);
+    const timeDisp = end ? `${item.time} - ${end}` : item.time;
+    const durDisp = item.duration ? `<span class="opacity-60 ml-1">(${item.duration}m)</span>` : '';
+    const clickAttr = IS_READ_ONLY ? '' : `onclick="openEditModal(${item.id})"`;
+    const deleteAttr = IS_READ_ONLY ? '' : `onclick="deleteEventDirect(${item.id})"`;
+
+    // --- 按鈕排版邏輯開始 ---
+    let buttonsHtml = '';
+    // 1. 收集所有動作 (導航 + 連結)
+    const actions = [];
+    
+    // 如果有導航 (Location)
+    if (item.location) {
+        const navUrl = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(item.location)}`;
+        actions.push({
+            type: 'nav',
+            title: '導航',
+            url: navUrl,
+            icon: 'fa-solid fa-location-arrow',
+            colorClass: 'bg-slate-700/50 hover:bg-slate-700 text-white'
+        });
+    }
+
+    // 如果有連結 (Links)
+    if (item.links && item.links.length > 0) {
+        item.links.forEach(link => {
+            actions.push({
+                type: 'link',
+                title: link.title,
+                url: link.url,
+                icon: 'fa-solid fa-ticket',
+                colorClass: 'bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30'
+            });
+        });
+    }
+
+    // 2. 根據數量生成 HTML
+    if (actions.length > 0) {
+        // 使用 grid 佈局，預設 2 列
+        buttonsHtml = `<div class="mt-auto pt-3 grid grid-cols-2 gap-2" onclick="event.stopPropagation()">`;
+        
+        actions.forEach((act, index) => {
+            let spanClass = 'col-span-1';
+            
+            // 邏輯：如果總數是奇數，且這是第一個按鈕 -> 佔滿 2 格 (最大顆)
+            if (actions.length % 2 !== 0 && index === 0) {
+                spanClass = 'col-span-2';
+            }
+
+            buttonsHtml += `
+                <a href="${act.url}" target="_blank" 
+                   class="${spanClass} ${act.colorClass} border border-slate-600/50 rounded-lg py-2.5 text-center text-xs font-bold transition flex items-center justify-center gap-2">
+                   <i class="${act.icon}"></i> ${act.title}
+                </a>
+            `;
+        });
+        
+        buttonsHtml += `</div>`;
+    }
+    // --- 按鈕排版邏輯結束 ---
+
+    // Swipe Structure (整合上述 buttonsHtml)
+    html += `
+        <div class="flex gap-2 mb-4 group">
+            <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
+                <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
+                <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
+                <div class="timeline-line"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="swipe-card-wrapper">
+                    <div class="swipe-actions">
+                        <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
+                    </div>
+                    <div class="swipe-content trip-card ${isImp ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between" ${clickAttr}>
+                        <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}</div>
+                        <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisp}</span>${durDisp}</div>
+                        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-1 line-clamp-10">${item.desc || ''}</p>
+                        
+                        ${buttonsHtml}
+
+                    </div>
+                </div>
+            </div>
+        </div>`;
+});
             }
             html += `</div>`;
             container.innerHTML = html;
@@ -1142,7 +1220,48 @@
 
         // --- CRUD / Logic ---
         function openDateSettings(m) { const mod=document.getElementById('date-settings-modal'); document.getElementById('date-modal-mode').value=m; const inp=document.getElementById('settings-day-date'); const del=document.getElementById('btn-delete-day'); if(m==='add'){ document.getElementById('date-modal-title').innerText='新增日期'; inp.value=''; del.classList.add('hidden'); }else{ document.getElementById('date-modal-title').innerText='編輯日期'; inp.value=activeDate; del.classList.remove('hidden'); } mod.classList.remove('hidden'); }
-        async function saveEvent() { if(IS_READ_ONLY) return; const idInput = document.getElementById('edit-id').value; const title = document.getElementById('edit-title').value; const time = document.getElementById('edit-time').value; if(!title || !time) return alert("請填寫標題與時間"); const ev = { id: idInput?parseInt(idInput):Date.now(), title, time, duration:document.getElementById('edit-duration').value, desc:document.getElementById('edit-desc').value, location:document.getElementById('edit-location').value, type:document.getElementById('edit-type').value, isImportant:document.getElementById('edit-important').checked }; let evs = tripData[activeDate] || []; if(idInput) { const idx = evs.findIndex(e=>e.id===parseInt(idInput)); if(idx!==-1) evs[idx]=ev; } else evs.push(ev); tripData[activeDate]=evs; closeEditModal(); renderPlan(document.getElementById('app')); await getTripRef().collection('itinerary').doc(activeDate).set({events: evs}); }
+        async function saveEvent() {
+    if (IS_READ_ONLY) return;
+    const idInput = document.getElementById('edit-id').value;
+    const title = document.getElementById('edit-title').value;
+    const time = document.getElementById('edit-time').value;
+
+    if (!title || !time) return alert("請填寫標題與時間");
+
+    // --- 新增邏輯：收集連結資料 ---
+    const links = [];
+    document.querySelectorAll('#edit-event-links-container > div').forEach(div => {
+        const t = div.querySelector('.link-title').value.trim();
+        const u = div.querySelector('.link-url').value.trim();
+        if (u) { // 只要有網址就儲存，標題沒填給預設值
+            links.push({ title: t || '連結', url: u });
+        }
+    });
+    // ---------------------------
+
+    const ev = {
+        id: idInput ? parseInt(idInput) : Date.now(),
+        title,
+        time,
+        duration: document.getElementById('edit-duration').value,
+        desc: document.getElementById('edit-desc').value,
+        location: document.getElementById('edit-location').value,
+        type: document.getElementById('edit-type').value,
+        isImportant: document.getElementById('edit-important').checked,
+        links: links // 儲存連結
+    };
+
+    let evs = tripData[activeDate] || [];
+    if (idInput) {
+        const idx = evs.findIndex(e => e.id === parseInt(idInput));
+        if (idx !== -1) evs[idx] = ev;
+    } else evs.push(ev);
+
+    tripData[activeDate] = evs;
+    closeEditModal();
+    renderPlan(document.getElementById('app'));
+    await getTripRef().collection('itinerary').doc(activeDate).set({ events: evs });
+}
         async function deleteEvent() { if(IS_READ_ONLY) return; if(confirm("刪除?")) { const id=parseInt(document.getElementById('edit-id').value); tripData[activeDate]=tripData[activeDate].filter(e=>e.id!==id); closeEditModal(); renderPlan(document.getElementById('app')); await getTripRef().collection('itinerary').doc(activeDate).set({events: tripData[activeDate]}); } }
         async function confirmDateSettings() { if(IS_READ_ONLY) return; const mode=document.getElementById('date-modal-mode').value; const newD=document.getElementById('settings-day-date').value; if(!newD)return; if(mode==='add'){ if(tripData[newD]) return alert("日期已存在"); tripData[newD]=[]; activeDate=newD; await getTripRef().collection('itinerary').doc(newD).set({events: []}); } else { if(newD!==activeDate) { if(tripData[newD] && !confirm("覆蓋?")) return; tripData[newD]=tripData[activeDate]; await getTripRef().collection('itinerary').doc(newD).set({events: tripData[newD]}); await getTripRef().collection('itinerary').doc(activeDate).delete(); delete tripData[activeDate]; activeDate=newD; } } document.getElementById('date-settings-modal').classList.add('hidden'); setInitialDate(); renderHeaderInfo(); renderPlan(document.getElementById('app')); }
         async function deleteCurrentDay() { if(IS_READ_ONLY) return; if(confirm("刪除整天?")) { const d=activeDate; delete tripData[d]; await getTripRef().collection('itinerary').doc(d).delete(); document.getElementById('date-settings-modal').classList.add('hidden'); setInitialDate(); renderHeaderInfo(); renderPlan(document.getElementById('app')); } }
@@ -1164,7 +1283,63 @@
         async function saveHighlight() { if(IS_READ_ONLY) return; const id=document.getElementById('highlight-id').value; const title=document.getElementById('highlight-title').value; if(!title)return alert("請輸入大標題"); const items=[]; document.querySelectorAll('#highlight-items-container > div').forEach(d=>{ const s=d.querySelector('.sub-title').value; const de=d.querySelector('.sub-desc').value; if(s) items.push({subtitle:s, desc:de}); }); const data={title, items}; const col=getTripRef().collection('highlights'); if(id){ await col.doc(id).update(data); const idx=highlightData.findIndex(x=>x.docId===id); if(idx!==-1) highlightData[idx]={...data,docId:id}; } else { const ref=await col.add(data); highlightData.push({...data,docId:ref.id}); } document.getElementById('highlight-modal').classList.add('hidden'); renderGuide(document.getElementById('app')); }
         async function deleteHighlight() { if(IS_READ_ONLY) return; if(confirm("刪除?")){ const id=document.getElementById('highlight-id').value; await getTripRef().collection('highlights').doc(id).delete(); highlightData=highlightData.filter(x=>x.docId!==id); document.getElementById('highlight-modal').classList.add('hidden'); renderGuide(document.getElementById('app')); } }
         async function confirmJsonImport() { if(IS_READ_ONLY) return; const str=document.getElementById('json-input').value; if(!str.trim())return; try { const data=JSON.parse(str); if(typeof data!=='object') throw new Error(); if(!confirm("覆蓋?"))return; document.getElementById('loading-overlay').style.display='flex'; const batch=db.batch(); const ref=getTripRef().collection('itinerary'); for(const [k,v] of Object.entries(data)) { if(!Array.isArray(v))continue; batch.set(ref.doc(k),{events:v}); } await batch.commit(); tripData=data; setInitialDate(); renderHeaderInfo(); document.getElementById('json-modal').classList.add('hidden'); switchTab('plan'); alert("成功"); } catch(e){ alert("錯誤"); } finally { document.getElementById('loading-overlay').style.display='none'; } }
-        function openEditModal(id) { if(IS_READ_ONLY) return; const c=document.getElementById('icon-selector'); c.innerHTML=Object.entries(iconTypes).map(([k,v])=>`<div onclick="selectIcon('${k}')" class="icon-option flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer p-2 rounded-xl border border-transparent hover:bg-white/5 transition active:scale-95" data-type="${k}" style="min-width:60px;"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg shadow-md transition-colors"><i class="${v.icon}"></i></div><span class="text-[10px] text-slate-400 font-medium">${v.label}</span></div>`).join(''); const m=document.getElementById('edit-modal'); const del=document.getElementById('btn-delete'); const tit=document.getElementById('modal-title'); document.getElementById('edit-id').value=''; document.getElementById('edit-title').value=''; document.getElementById('edit-time').value='09:00'; document.getElementById('edit-duration').value=''; document.getElementById('edit-desc').value=''; document.getElementById('edit-location').value=''; document.getElementById('edit-important').checked=false; selectIcon('transport'); if(id){ const it=tripData[activeDate].find(x=>x.id===id); if(!it)return; tit.innerText="編輯行程"; del.classList.remove('hidden'); document.getElementById('edit-id').value=it.id; document.getElementById('edit-title').value=it.title; document.getElementById('edit-time').value=it.time; document.getElementById('edit-duration').value=it.duration||''; document.getElementById('edit-desc').value=it.desc||''; document.getElementById('edit-location').value=it.location||''; document.getElementById('edit-important').checked=it.isImportant||false; selectIcon(it.type||'transport'); } else { tit.innerText="新增行程"; del.classList.add('hidden'); } m.classList.remove('hidden'); const mc=m.querySelector('.glass-modal'); m.classList.remove('opacity-0'); mc.classList.remove('scale-95'); mc.classList.add('scale-100'); }
+        function openEditModal(id) {
+    if (IS_READ_ONLY) return;
+    
+    // 初始化 UI
+    const c = document.getElementById('icon-selector');
+    c.innerHTML = Object.entries(iconTypes).map(([k, v]) => `<div onclick="selectIcon('${k}')" class="icon-option flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer p-2 rounded-xl border border-transparent hover:bg-white/5 transition active:scale-95" data-type="${k}" style="min-width:60px;"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg shadow-md transition-colors"><i class="${v.icon}"></i></div><span class="text-[10px] text-slate-400 font-medium">${v.label}</span></div>`).join('');
+    
+    const m = document.getElementById('edit-modal');
+    const del = document.getElementById('btn-delete');
+    const tit = document.getElementById('modal-title');
+    
+    // 清空連結容器
+    document.getElementById('edit-event-links-container').innerHTML = '';
+
+    // 重置基本欄位
+    document.getElementById('edit-id').value = '';
+    document.getElementById('edit-title').value = '';
+    document.getElementById('edit-time').value = '09:00';
+    document.getElementById('edit-duration').value = '';
+    document.getElementById('edit-desc').value = '';
+    document.getElementById('edit-location').value = '';
+    document.getElementById('edit-important').checked = false;
+    selectIcon('transport');
+
+    if (id) {
+        const it = tripData[activeDate].find(x => x.id === id);
+        if (!it) return;
+        tit.innerText = "編輯行程";
+        del.classList.remove('hidden');
+        
+        // 回填基本資料
+        document.getElementById('edit-id').value = it.id;
+        document.getElementById('edit-title').value = it.title;
+        document.getElementById('edit-time').value = it.time;
+        document.getElementById('edit-duration').value = it.duration || '';
+        document.getElementById('edit-desc').value = it.desc || '';
+        document.getElementById('edit-location').value = it.location || '';
+        document.getElementById('edit-important').checked = it.isImportant || false;
+        selectIcon(it.type || 'transport');
+
+        // --- 回填連結資料 ---
+        if (it.links && Array.isArray(it.links)) {
+            it.links.forEach(l => addEventLinkInput(l.title, l.url));
+        }
+    } else {
+        tit.innerText = "新增行程";
+        del.classList.add('hidden');
+        // 如果是新增，預設給一個空的連結輸入框方便使用
+        // addEventLinkInput(); 
+    }
+
+    m.classList.remove('hidden');
+    const mc = m.querySelector('.glass-modal');
+    m.classList.remove('opacity-0');
+    mc.classList.remove('scale-95');
+    mc.classList.add('scale-100');
+}
         function closeEditModal() { const m=document.getElementById('edit-modal'); const c=m.querySelector('.glass-modal'); m.classList.add('opacity-0'); c.classList.remove('scale-100'); c.classList.add('scale-95'); setTimeout(()=>m.classList.add('hidden'),300); }
         function selectIcon(t) { document.getElementById('edit-type').value=t; document.querySelectorAll('.icon-option').forEach(el=>{ if(el.dataset.type===t) { el.classList.add('bg-accent/20', 'border-accent'); el.querySelector('div').classList.replace('bg-slate-700', 'bg-accent'); } else { el.classList.remove('bg-accent/20', 'border-accent'); el.querySelector('div').classList.replace('bg-accent', 'bg-slate-700'); } }); }
         function openJsonModal() { if(IS_READ_ONLY) return; document.getElementById('json-input').value=''; document.getElementById('json-modal').classList.remove('hidden'); }
