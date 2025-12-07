@@ -1168,8 +1168,15 @@
                         <button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
                         <h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>
                         ${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}
-                        ${p.links && p.links.length > 0 ? `<div class="grid grid-cols-2 gap-2 mb-4">
-${p.links.map(l => `<a href="javascript:void(0)" onclick="window.open('${l.url}', '_blank'); return false;" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1"><i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}</a>`).join('')}</div>` : ''}
+                        ${p.links && p.links.length > 0 ? 
+    `<div class="grid grid-cols-2 gap-2 mb-4">
+        ${p.links.map(l => `
+            <button onclick="openExternal('${l.url}')" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1 w-full">
+                <i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}
+            </button>
+        `).join('')}
+    </div>` 
+: ''}
                         ${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}
                     </div>`;
         });
@@ -1511,6 +1518,17 @@ async function performRefresh() {
         // 這裡直接呼叫最簡單：
         await initMainApp(); 
     }
+}
+
+// --- 強制使用 Safari 開啟外部連結 ---
+function openExternal(url) {
+    if (!url) return;
+    // 確保有 protocol，否則 window.open 可能會失敗或變成相對路徑
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+    }
+    // 'noopener,noreferrer' 有助於 iOS 判斷這是新視窗
+    window.open(url, '_blank', 'noopener,noreferrer');
 }
     
     </script>
