@@ -187,6 +187,21 @@
             box-shadow: none; /* Shadow on wrapper maybe? */
             border-left-width: 5px;
         }
+        /* --- Feature 3: 重要行程卡片樣式修正 --- */
+        .trip-card.important {
+            /* 使用紫色漸層背景，並且覆蓋原本的深灰色背景 */
+            background: linear-gradient(115deg, #7742cc 0%,#9f66fa 35%, #0f172a 100%) !important; 
+            /* 稍微調整左側邊框顏色使其更協調，非半透明 */
+            border-left-color: #c4b5fd !important; 
+        }
+        
+        /* 確保內容文字在紫色背景上依然清晰 (原本已是白色，這裡加強陰影對比) */
+        .trip-card.important h3, 
+        .trip-card.important p, 
+        .trip-card.important .fa-clock,
+        .trip-card.important span {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
