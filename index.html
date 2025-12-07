@@ -2,7 +2,13 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Travel Planner">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/201/201623.png">
+
     <title>Travel Planner Pro</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -46,6 +52,9 @@
             -webkit-tap-highlight-color: transparent;
             font-family: 'Noto Sans TC', sans-serif;
             overflow-x: hidden;
+            /* Support for safe area in standalone mode */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -120,12 +129,12 @@
     </section>
 
     <section id="view-dashboard" class="view-section pt-20 px-4">
-        <header class="glass-header fixed top-0 left-0 w-full z-50 h-[70px] flex justify-between items-center px-5">
+        <header class="glass-header fixed top-0 left-0 w-full z-50 h-[70px] flex justify-between items-center px-5 pt-[env(safe-area-inset-top)]">
             <h1 class="font-display font-bold text-xl text-white">我的行程</h1>
             <button onclick="logout()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-right-from-bracket"></i> <span id="user-status-text">登出</span></button>
         </header>
 
-        <div class="mb-6">
+        <div class="mb-6 mt-4">
             <div class="flex gap-2">
                 <input type="text" id="search-trip-id" placeholder="輸入行程 ID (檢視公開行程)" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2.5 text-white focus:border-accent outline-none text-sm font-mono">
                 <button onclick="searchPublicTrip()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 rounded-lg"><i class="fa-solid fa-search"></i></button>
@@ -160,7 +169,7 @@
     </section>
 
     <section id="view-main-app" class="view-section pt-[80px] pb-24">
-        <header class="glass-header fixed top-0 w-full z-50 h-[80px] flex justify-between items-center px-5 pt-2">
+        <header class="glass-header fixed top-0 w-full z-50 h-[80px] flex justify-between items-center px-5 pt-[calc(env(safe-area-inset-top)+8px)]">
             <div class="flex items-center gap-3">
                 <button onclick="backToDashboard()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-chevron-left"></i></button>
                 <div class="flex flex-col justify-center">
@@ -180,8 +189,8 @@
                 <span id="header-day-badge" class="font-display text-[10px] font-bold text-white bg-accent px-2 py-0.5 rounded-full shadow-lg shadow-rose-500/20 tracking-wider">
                     DAY 1
                 </span>
-                <div id="weather-badge" class="flex items-center gap-1.5 text-xs text-slate-300 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700">
-                    <i class="fa-solid fa-spinner fa-spin text-[10px]"></i>
+                <div id="weather-badge" class="flex items-center gap-1.5 text-xs text-slate-300 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700 min-h-[26px]">
+                   <span class="text-[10px] text-slate-500">設定地點</span>
                 </div>
             </div>
         </header>
@@ -205,7 +214,16 @@
                         <div onclick="copyTripId()" class="font-mono text-sm text-accent break-all cursor-pointer hover:text-white transition" id="settings-trip-id"></div>
                     </div>
 
-                    <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-2">天氣地點設定</h4>
+                        <div class="flex gap-2 mb-1">
+                            <input type="text" id="settings-weather-city" placeholder="輸入城市英文 (ex: Osaka)" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
+                            <button onclick="saveWeatherLocation()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">儲存</button>
+                        </div>
+                        <p class="text-[10px] text-slate-500">輸入城市後，系統將自動抓取當前天氣</p>
+                    </div>
+
+                    <div class="flex items-center justify-between border-t border-slate-700 pt-4">
                         <div>
                             <h4 class="text-sm font-bold text-white">允許訪客檢視 (公開)</h4>
                             <p class="text-xs text-slate-400">開啟後，任何人只要有 ID 即可檢視行程(唯讀)</p>
@@ -340,6 +358,7 @@
         let highlightData = [];
         let activeTab = 'plan'; 
         let activeDate = '';
+        let weatherCache = {}; // Cache for weather data
 
         const iconTypes = {
             transport: { icon: 'fa-solid fa-suitcase-rolling', label: '交通' },
@@ -354,6 +373,16 @@
             star: { icon: 'fa-solid fa-star', label: '重點' },
             camera: { icon: 'fa-solid fa-camera', label: '景點' },
             entry: { icon: 'fa-solid fa-passport', label: '出入境' },
+        };
+
+        const weatherIconsMap = {
+            0: 'fa-sun', 1: 'fa-cloud-sun', 2: 'fa-cloud-sun', 3: 'fa-cloud',
+            45: 'fa-smog', 48: 'fa-smog',
+            51: 'fa-cloud-rain', 53: 'fa-cloud-rain', 55: 'fa-cloud-rain',
+            61: 'fa-umbrella', 63: 'fa-umbrella', 65: 'fa-umbrella',
+            71: 'fa-snowflake', 73: 'fa-snowflake', 75: 'fa-snowflake',
+            80: 'fa-cloud-showers-heavy', 81: 'fa-cloud-showers-heavy', 82: 'fa-cloud-showers-heavy',
+            95: 'fa-bolt', 96: 'fa-bolt', 99: 'fa-bolt'
         };
 
         // --- AUTH & VIEW ---
@@ -499,8 +528,6 @@
 
         async function deleteTrip(tripId) { 
             if(confirm("確定刪除行程？此動作無法復原。")) { 
-                // In a real app, delete subcollections via Cloud Functions. Here we just delete the doc ref for simplicity of this demo.
-                // Ideally we should delete all sub-docs.
                 await db.collection('trips').doc(tripId).delete(); 
                 if(CURRENT_TRIP_ID === tripId) backToDashboard();
                 else loadTripsList(); 
@@ -524,12 +551,10 @@
         async function initMainApp() {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
-                // Fetch fresh metadata to ensure permissions
                 const tripDoc = await getTripRef().get();
                 if(!tripDoc.exists) throw new Error("Trip not found");
                 CURRENT_TRIP_METADATA = tripDoc.data();
 
-                // Determine Permissions
                 checkPermissions();
                 updateUIForPermissions();
 
@@ -556,12 +581,10 @@
         function checkPermissions() {
             if (!CURRENT_USER) { IS_READ_ONLY = true; return; }
             if (CURRENT_USER.isAnonymous) {
-                // Guest User: Read Only (even if isPublic is true, guests can't edit)
                 IS_READ_ONLY = true;
             } else {
                 const isOwner = CURRENT_TRIP_METADATA.createdBy === CURRENT_USER.uid;
                 const isCollab = CURRENT_TRIP_METADATA.collaborators && CURRENT_TRIP_METADATA.collaborators.includes(CURRENT_USER.email);
-                // Can edit if Owner or Collaborator
                 IS_READ_ONLY = !(isOwner || isCollab);
             }
         }
@@ -579,16 +602,16 @@
             } else {
                 body.classList.remove('is-read-only');
                 badge.classList.add('hidden');
-                // Only owner sees settings (to add collaborators)
                 if(isOwner) settingsBtn.classList.remove('hidden');
                 else settingsBtn.classList.add('hidden');
             }
         }
 
-        // --- TRIP SETTINGS & SHARING ---
+        // --- TRIP SETTINGS & SHARING & WEATHER ---
         function openTripSettings() {
             document.getElementById('settings-trip-id').innerText = CURRENT_TRIP_ID;
             document.getElementById('settings-is-public').checked = CURRENT_TRIP_METADATA.isPublic || false;
+            document.getElementById('settings-weather-city').value = CURRENT_TRIP_METADATA.weatherCity || '';
             renderCollaborators();
             document.getElementById('trip-settings-modal').classList.remove('hidden');
         }
@@ -634,6 +657,13 @@
             await updateTripMetadata({ isPublic });
         }
 
+        async function saveWeatherLocation() {
+            const city = document.getElementById('settings-weather-city').value.trim();
+            await updateTripMetadata({ weatherCity: city });
+            alert("地點已儲存");
+            renderHeaderInfo(); // Refresh header to try loading weather
+        }
+
         async function updateTripMetadata(update) {
             try {
                 await getTripRef().update(update);
@@ -651,7 +681,62 @@
             });
         }
 
-        // --- CORE RENDER LOGIC (Minor updates for read-only) ---
+        // --- WEATHER LOGIC (Open-Meteo) ---
+        async function fetchWeather(city) {
+            if (!city) return null;
+            if (weatherCache[city]) return weatherCache[city]; // Return cached if available
+
+            try {
+                // 1. Geocoding
+                const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`;
+                const geoRes = await fetch(geoUrl);
+                const geoData = await geoRes.json();
+
+                if (!geoData.results || geoData.results.length === 0) return null;
+
+                const { latitude, longitude } = geoData.results[0];
+
+                // 2. Weather
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`;
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+                
+                if (weatherData.current_weather) {
+                    const result = {
+                        temp: Math.round(weatherData.current_weather.temperature),
+                        code: weatherData.current_weather.weathercode
+                    };
+                    weatherCache[city] = result;
+                    return result;
+                }
+            } catch (e) {
+                console.error("Weather fetch failed", e);
+            }
+            return null;
+        }
+
+        async function updateWeatherDisplay() {
+            const badge = document.getElementById('weather-badge');
+            const city = CURRENT_TRIP_METADATA.weatherCity;
+
+            if (!city) {
+                badge.innerHTML = `<span class="text-[10px] text-slate-500 cursor-pointer" onclick="openTripSettings()">設定地點</span>`;
+                return;
+            }
+
+            // Show loading if not cached
+            if(!weatherCache[city]) badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-[10px]"></i>`;
+
+            const data = await fetchWeather(city);
+            if (data) {
+                const iconClass = weatherIconsMap[data.code] || 'fa-cloud';
+                badge.innerHTML = `<i class="fa-solid ${iconClass} text-subAccent text-xs"></i><span class="font-mono font-bold text-slate-300 ml-1">${data.temp}°C</span>`;
+            } else {
+                badge.innerHTML = `<span class="text-[10px] text-red-400">天氣錯誤</span>`;
+            }
+        }
+
+        // --- CORE RENDER LOGIC ---
         function setInitialDate() {
             const sorted = Object.keys(tripData).sort();
             if(sorted.length > 0) {
@@ -690,8 +775,9 @@
             const sorted = Object.keys(tripData).sort();
             const idx = sorted.indexOf(activeDate);
             document.getElementById('header-day-badge').innerText = idx >= 0 ? `DAY ${idx+1}` : "Trip";
-            const d = new Date(activeDate);
-            document.getElementById('weather-badge').innerHTML = `<a href="https://www.jma.go.jp/bosai/forecast/" target="_blank" class="flex items-center gap-1.5"><span class="font-mono font-bold text-slate-400">${d.getMonth()+1}/${d.getDate()}</span><i class="fa-solid fa-cloud-sun text-subAccent"></i></a>`;
+            
+            // Removed Date Text, Updated Weather Logic
+            updateWeatherDisplay();
         }
 
         function renderPlan(container) {
@@ -715,7 +801,6 @@
                     const timeDisp = end ? `${item.time} - ${end}` : item.time;
                     const durDisp = item.duration ? `<span class="opacity-60 ml-1">(${item.duration}m)</span>` : '';
                     
-                    // Logic to disable click if ReadOnly
                     const clickAttr = IS_READ_ONLY ? '' : `onclick="openEditModal(${item.id})"`;
 
                     html += `
@@ -755,7 +840,8 @@
             if (parkData.length === 0) html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無票券資訊</div>`;
             else {
                 parkData.forEach(p => {
-                    html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group"><button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button><h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}${p.links && p.links.length > 0 ? `<div class="grid grid-cols-2 gap-2 mb-4">${p.links.map(l => `<a href="${l.url}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1"><i class="${l.icon || 'fa-solid fa-link'} text-lg text-subAccent"></i> ${l.title}</a>`).join('')}</div>` : ''}${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}</div>`;
+                    // Update: Changed default link icon to fa-ticket
+                    html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group"><button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button><h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}${p.links && p.links.length > 0 ? `<div class="grid grid-cols-2 gap-2 mb-4">${p.links.map(l => `<a href="${l.url}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1"><i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}</a>`).join('')}</div>` : ''}${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}</div>`;
                 });
             }
             html += `<div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star mr-2 text-blue-400"></i>行程重點</h3><button onclick="openHighlightModal(null)" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button></div>`;
