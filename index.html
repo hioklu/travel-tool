@@ -1216,14 +1216,55 @@ ${p.links.map(l => `<a href="javascript:void(0)" onclick="window.open('${l.url}'
         }
 
         function renderInfo(container) {
-            let accHtml = '';
-            if(accommodationData.length===0) accHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無住宿資訊</div>`;
-            else accommodationData.forEach(acc => {
-                const mapLink = acc.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(acc.address)}` : '#';
-                accHtml += `<div class="bg-card rounded-xl p-6 text-center border border-slate-700 relative group mb-4"><button onclick="openInfoModal('${acc.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button><h2 class="text-xl font-bold text-white mb-1">${acc.title}</h2><p class="text-sm text-slate-400 mb-4">${acc.subtitle || ''}</p><div class="text-xs text-slate-500 mb-4 whitespace-pre-line">${acc.address || '無地址資訊'}</div><a href="${mapLink}" target="_blank" class="inline-block bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-slate-600"><i class="fa-solid fa-location-arrow mr-1"></i> 導航至飯店</a></div>`;
-            });
-            container.innerHTML = `<div class="space-y-4 pb-24 animate-[fadeIn_0.3s_ease-out]"><div class="flex justify-between items-center px-1"><h3 class="text-sm font-bold text-slate-300">住宿資訊</h3><button onclick="openInfoModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1 rounded-lg font-bold hover:opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button></div>${accHtml}<div class="grid grid-cols-2 gap-4"><a href="https://www.jma.go.jp/bosai/forecast/" target="_blank" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2"><i class="fa-solid fa-cloud-sun-rain text-2xl text-blue-400"></i><span class="text-sm font-bold">天氣預報</span></a><a href="https://goo.gl/maps/osaka" target="_blank" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot text-2xl text-green-400"></i><span class="text-sm font-bold">Google Maps</span></a></div><div class="mt-8 pt-6 border-t border-slate-700 edit-trigger"><h3 class="text-sm font-bold text-slate-400 mb-4 px-2">資料庫管理</h3><button onclick="openJsonModal()" class="w-full py-3 rounded-xl bg-slate-800 border border-slate-600 text-accent font-bold mb-3 flex items-center justify-center gap-2 hover:bg-slate-700"><i class="fa-solid fa-file-import"></i> 貼上 JSON 匯入行程</button></div></div>`;
-        }
+    let accHtml = '';
+    if (accommodationData.length === 0) 
+        accHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無住宿資訊</div>`;
+    else 
+        accommodationData.forEach(acc => {
+            const mapLink = acc.address ? `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(acc.address)}` : '#';
+            // 注意：這裡我順便加上了上一題教的 window.open 讓地圖連結也能跳轉 Safari
+            accHtml += `<div class="bg-card rounded-xl p-6 text-center border border-slate-700 relative group mb-4">
+                <button onclick="openInfoModal('${acc.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
+                <h2 class="text-xl font-bold text-white mb-1">${acc.title}</h2>
+                <p class="text-sm text-slate-400 mb-4">${acc.subtitle || ''}</p>
+                <div class="text-xs text-slate-500 mb-4 whitespace-pre-line">${acc.address || '無地址資訊'}</div>
+                <a href="javascript:void(0)" onclick="window.open('${mapLink}', '_blank'); return false;" class="inline-block bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-slate-600"><i class="fa-solid fa-location-arrow mr-1"></i> 導航至飯店</a>
+            </div>`;
+        });
+
+    container.innerHTML = `
+    <div class="space-y-4 pb-24 animate-[fadeIn_0.3s_ease-out]">
+        <div class="flex justify-between items-center px-1">
+            <h3 class="text-sm font-bold text-slate-300">住宿資訊</h3>
+            <button onclick="openInfoModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1 rounded-lg font-bold hover:opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+        </div>
+        
+        ${accHtml}
+        
+        <div class="grid grid-cols-2 gap-4">
+            <a href="javascript:void(0)" onclick="window.open('https://www.jma.go.jp/bosai/forecast/', '_blank')" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-cloud-sun-rain text-2xl text-blue-400"></i><span class="text-sm font-bold">天氣預報</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.open('https://goo.gl/maps/osaka', '_blank')" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-2xl text-green-400"></i><span class="text-sm font-bold">Google Maps</span>
+            </a>
+        </div>
+        
+        <div class="mt-8 pt-6 border-t border-slate-700 edit-trigger">
+            <h3 class="text-sm font-bold text-slate-400 mb-4 px-2">資料庫管理</h3>
+            <button onclick="openJsonModal()" class="w-full py-3 rounded-xl bg-slate-800 border border-slate-600 text-accent font-bold mb-3 flex items-center justify-center gap-2 hover:bg-slate-700">
+                <i class="fa-solid fa-file-import"></i> 貼上 JSON 匯入行程
+            </button>
+        </div>
+
+        <div class="text-center mt-10 mb-6 opacity-40 hover:opacity-80 transition-opacity select-none">
+            <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.0</p>
+            <p class="text-[10px] text-slate-500 font-display font-bold mt-1">
+                Powered by <span class="text-accent">Hioklu</span>
+            </p>
+        </div>
+    </div>`;
+}
 
         // --- CRUD / Logic ---
         function openDateSettings(m) { const mod=document.getElementById('date-settings-modal'); document.getElementById('date-modal-mode').value=m; const inp=document.getElementById('settings-day-date'); const del=document.getElementById('btn-delete-day'); if(m==='add'){ document.getElementById('date-modal-title').innerText='新增日期'; inp.value=''; del.classList.add('hidden'); }else{ document.getElementById('date-modal-title').innerText='編輯日期'; inp.value=activeDate; del.classList.remove('hidden'); } mod.classList.remove('hidden'); }
