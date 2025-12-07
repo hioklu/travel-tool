@@ -635,18 +635,43 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const el = document.createElement('div');
+                // 移除這裡的相對定位與 hover 效果，保持簡潔
                 el.className = 'bg-card rounded-xl p-5 border border-slate-700 cursor-pointer hover:bg-slate-800 transition relative group active:scale-[0.98]';
                 el.onclick = () => selectTrip(doc.id, data);
                 
                 let actionsBtn = '';
                 if (isOwner) {
-                      actionsBtn = `<div class="flex gap-3 mt-4 pt-3 border-t border-slate-700/50 justify-end"><button onclick="event.stopPropagation(); openEditTripInfo('${doc.id}', '${escapeHtml(data.title)}', '${escapeHtml(data.description)}')" class="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-600 hover:text-white transition flex items-center gap-1"><i class="fa-solid fa-pen"></i> 編輯</button><button onclick="event.stopPropagation(); deleteTrip('${doc.id}')" class="px-3 py-1.5 rounded-lg bg-red-900/20 text-red-400 text-xs font-bold hover:bg-red-900/40 transition flex items-center gap-1"><i class="fa-solid fa-trash"></i> 刪除</button></div>`;
+                    // 修改重點：
+                    // 1. 移除原本的 border-t 和 mt-4
+                    // 2. 加入 ml-2 與 flex-shrink-0 確保按鈕不會被壓縮
+                    // 3. 改用 Icon 按鈕 (w-8 h-8 rounded-full) 節省空間
+                    actionsBtn = `
+                    <div class="flex gap-2 flex-shrink-0 ml-3">
+                        <button onclick="event.stopPropagation(); openEditTripInfo('${doc.id}', '${escapeHtml(data.title)}', '${escapeHtml(data.description)}')" class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 hover:text-white hover:bg-slate-600 transition flex items-center justify-center border border-slate-600">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteTrip('${doc.id}')" class="w-8 h-8 rounded-full bg-pink-900 text-white border border-red-900/50 hover:bg-red-900/30 transition flex items-center justify-center">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    </div>`;
                 }
+                
                 let badge = '';
                 if(data.isPublic) badge += `<span class="absolute top-4 right-4 text-[10px] bg-blue-900/50 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded">公開</span>`;
                 if(!isOwner && !isGuestView) badge += `<span class="absolute top-4 right-4 text-[10px] bg-purple-900/50 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">協作</span>`;
 
-                el.innerHTML = `<div class="flex justify-between items-start mr-8"><h3 class="text-lg font-bold text-white leading-tight">${data.title || '未命名'}</h3></div>${badge}<p class="text-sm text-slate-400 mt-2 line-clamp-2 min-h-[1.25rem]">${data.description || '無描述'}</p>${actionsBtn}`;
+                // 修改重點 HTML 結構：
+                // 使用 <div class="flex justify-between items-end mt-2"> 包覆描述與按鈕
+                // 描述加上 flex-1 佔滿剩餘空間
+                el.innerHTML = `
+                    <div class="flex justify-between items-start mr-10">
+                        <h3 class="text-lg font-bold text-white leading-tight">${data.title || '未命名'}</h3>
+                    </div>
+                    ${badge}
+                    <div class="flex justify-between items-end mt-2">
+                        <p class="text-sm text-slate-400 line-clamp-2 min-h-[1.25rem] flex-1 break-all">${data.description || '無描述'}</p>
+                        ${actionsBtn}
+                    </div>`;
                 container.appendChild(el);
             });
         }
