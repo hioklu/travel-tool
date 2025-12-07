@@ -190,7 +190,7 @@
         /* --- Feature 3: 重要行程卡片樣式修正 --- */
         .trip-card.important {
             /* 使用紫色漸層背景，並且覆蓋原本的深灰色背景 */
-            background: linear-gradient(130deg, #8f5be4 0%, #1e293b 60%,#1e293b 100%) !important; 
+            background: linear-gradient(130deg, #2d1f42f8 0%, #1e293b 60%,#1e293b 100%) !important; 
             /* 稍微調整左側邊框顏色使其更協調，非半透明 */
             border-left-color: #c4b5fd !important; 
         }
@@ -902,7 +902,7 @@
                                         <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
                                     </div>
                                     <div class="swipe-content trip-card ${isImp ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between" ${clickAttr}>
-                                        <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-accent text-xs"></i>' : ''}</div>
+                                        <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}</div>
                                         <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisp}</span>${durDisp}</div>
                                         <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-4 line-clamp-4">${item.desc || ''}</p>
                                         <div class="mt-auto pt-2 flex gap-2">
