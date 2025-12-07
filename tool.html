@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Osaka Trip 2026</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Roboto+Mono:wght@500;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        mono: ['"Roboto Mono"', 'monospace'],
+                        display: ['"Poppins"', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: '#0f172a',      
+                        card: '#1e293b',      
+                        cardLight: '#334155', 
+                        accent: '#a56ce6',    
+                        subAccent: '#fbbf24', 
+                        textMain: '#f8fafc',
+                        textSub: '#94a3b8',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Noto Sans TC', sans-serif;
+            overflow-x: hidden;
+            padding-bottom: 90px;
+            padding-top: 80px; 
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-header {
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-modal {
+            background: rgba(30, 41, 59, 0.98);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-line {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            top: 45px; bottom: -30px; width: 2px; background-color: #334155; z-index: 0;
+        }
+        .last-item .timeline-line { display: none; }
+
+        .trip-card {
+            background: #1e293b; border-radius: 12px; border-left-width: 5px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s; cursor: pointer;
+        }
+        .trip-card:active { transform: scale(0.98); }
+        .trip-card.important { border-left-color: #a56ce6; background: linear-gradient(90deg, rgba(244,63,94,0.08) 0%, rgba(30,41,59,1) 100%); }
+        .trip-card.normal { border-left-color: #64748b; }
+
+        .nav-btn.active { color: #a56ce6; }
+        
+        .fab {
+            position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px;
+            background-color: #a56ce6; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4); z-index: 40; transition: transform 0.2s;
+        }
+        .fab:active { transform: scale(0.9); }
+        
+        #loading-overlay {
+            position: fixed; inset: 0; background: #0f172a; z-index: 100;
+            display: flex; justify-content: center; align-items: center; transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="flex flex-col items-center">
+            <i class="fa-solid fa-plane-up fa-bounce text-4xl text-accent mb-4"></i>
+            <p class="text-sm text-slate-400 font-mono">載入行程中...</p>
+        </div>
+    </div>
+
+    <header class="glass-header fixed top-0 w-full z-50 h-[80px] flex justify-between items-center px-5 pt-2">
+        <div class="flex flex-col justify-center">
+            <h1 class="font-display font-bold text-2xl leading-none tracking-tight text-white mb-1">
+                Osaka Trip <span class="text-accent">2026</span>
+            </h1>
+            <p class="text-xs text-slate-400 font-medium tracking-wide">關西・大阪・環球影城</p>
+        </div>
+        <div class="flex flex-col items-end gap-1.5">
+            <span id="header-day-badge" class="font-display text-[10px] font-bold text-white bg-accent px-2 py-0.5 rounded-full shadow-lg shadow-rose-500/20 tracking-wider">
+                DAY 1
+            </span>
+            <div id="weather-badge" class="flex items-center gap-1.5 text-xs text-slate-300 bg-slate-800/80 px-2 py-1 rounded-lg border border-slate-700">
+                <i class="fa-solid fa-spinner fa-spin text-[10px]"></i>
+            </div>
+        </div>
+    </header>
+
+    <main id="app" class="px-4 pt-4 min-h-screen"></main>
+
+    <button id="fab-add" onclick="openEditModal(null)" class="fab hidden">
+        <i class="fa-solid fa-plus text-white text-xl"></i>
+    </button>
+
+    <div id="edit-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
+            <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square text-accent"></i> <span id="modal-title">編輯行程</span>
+            </h3>
+            <input type="hidden" id="edit-id">
+            
+            <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                <div>
+                    <label class="text-xs text-textSub block mb-1">類型圖示</label>
+                    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar" id="icon-selector"></div>
+                    <input type="hidden" id="edit-type" value="transport">
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">標題</label>
+                    <input type="text" id="edit-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">開始時間</label>
+                        <input type="time" id="edit-time" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">持續 (分鐘)</label>
+                        <input type="number" id="edit-duration" min="0" step="15" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="90">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">備註 / 描述</label>
+                    <textarea id="edit-desc" rows="3" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">Google Maps 關鍵字</label>
+                    <input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                <div class="flex items-center gap-2 mt-2">
+                    <input type="checkbox" id="edit-important" class="w-4 h-4 rounded bg-dark border-slate-600 text-accent focus:ring-accent">
+                    <label for="edit-important" class="text-sm text-white">標記為重要行程</label>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="deleteEvent()" id="btn-delete" class="px-4 py-3 rounded-xl bg-red-900/30 text-red-400 border border-red-900/50 hidden"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="document.getElementById('edit-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="saveEvent()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="flight-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
+            <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2">
+                <i class="fa-solid fa-plane text-accent"></i> <span id="flight-modal-title">新增航班</span>
+            </h3>
+            <input type="hidden" id="flight-id">
+            
+            <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">航空公司</label>
+                        <input type="text" id="flight-airline" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="泰獅航">
+                    </div>
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">航班代號</label>
+                        <input type="text" id="flight-code" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="SL396">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">日期</label>
+                    <input type="date" id="flight-date" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">出發時間</label>
+                        <input type="time" id="flight-dep-time" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">出發機場/航廈</label>
+                        <input type="text" id="flight-dep-port" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="TPE T1">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">抵達時間</label>
+                        <input type="time" id="flight-arr-time" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                    </div>
+                    <div>
+                        <label class="text-xs text-textSub block mb-1">抵達機場/航廈</label>
+                        <input type="text" id="flight-arr-port" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="KIX T1">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">訂位代號 (PNR)</label>
+                    <input type="text" id="flight-pnr" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none font-mono text-accent" placeholder="ABCDEF">
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">連結 (線上報到/動態)</label>
+                    <input type="text" id="flight-link" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="http://...">
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="deleteFlight()" id="btn-flight-delete" class="px-4 py-3 rounded-xl bg-red-900/30 text-red-400 border border-red-900/50 hidden"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="document.getElementById('flight-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="saveFlight()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="info-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
+            <h3 class="text-lg font-bold mb-4 text-white flex items-center gap-2">
+                <i class="fa-solid fa-hotel text-subAccent"></i> <span id="info-modal-title">新增住宿資訊</span>
+            </h3>
+            <input type="hidden" id="info-id">
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-textSub block mb-1">名稱 (飯店名)</label>
+                    <input type="text" id="info-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">分店/描述</label>
+                    <input type="text" id="info-subtitle" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                <div>
+                    <label class="text-xs text-textSub block mb-1">地址</label>
+                    <textarea id="info-address" rows="2" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="deleteAccommodation()" id="btn-info-delete" class="px-4 py-3 rounded-xl bg-red-900/30 text-red-400 border border-red-900/50 hidden"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="document.getElementById('info-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="saveAccommodation()" class="flex-1 py-3 rounded-xl bg-subAccent text-dark font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="date-settings-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-white" id="date-modal-title">日期設定</h3>
+            <input type="hidden" id="date-modal-mode" value="add"> 
+            <div class="mb-6">
+                <label class="text-xs text-textSub block mb-1">選擇日期</label>
+                <input type="date" id="settings-day-date" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+            </div>
+            <div class="flex gap-3">
+                <button type="button" id="btn-delete-day" onclick="deleteCurrentDay()" class="hidden px-4 py-3 rounded-xl bg-red-900/30 text-red-400 border border-red-900/50 flex-none"><i class="fa-solid fa-trash-can"></i></button>
+                <button onclick="document.getElementById('date-settings-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="confirmDateSettings()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">確認</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="json-modal" class="fixed inset-0 bg-black/80 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-code text-subAccent"></i> 匯入 JSON 資料
+                </h3>
+                <button onclick="fillTemplate()" class="text-xs text-accent border border-accent/50 px-2 py-1 rounded hover:bg-accent/10">載入範本</button>
+            </div>
+            <p class="text-xs text-slate-400 mb-2">請貼上符合格式的 JSON 資料，這將覆蓋現有資料庫。</p>
+            <textarea id="json-input" class="w-full flex-1 bg-dark border border-slate-600 rounded-lg p-3 text-white font-mono text-xs focus:border-accent outline-none min-h-[300px] mb-6"></textarea>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('json-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="confirmJsonImport()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold"><i class="fa-solid fa-cloud-arrow-up mr-1"></i> 確認匯入</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="glass-nav fixed bottom-0 w-full z-40 pb-[env(safe-area-inset-bottom)]">
+        <div class="flex justify-around items-center h-16">
+            <button onclick="switchTab('plan')" class="nav-btn active w-1/4 flex flex-col items-center gap-1 text-textSub" data-tab="plan">
+                <i class="fa-solid fa-list-ul text-xl"></i>
+                <span class="text-[10px] font-bold">行程</span>
+            </button>
+            <button onclick="switchTab('guide')" class="nav-btn w-1/4 flex flex-col items-center gap-1 text-textSub" data-tab="guide">
+                <i class="fa-solid fa-book-open text-xl"></i>
+                <span class="text-[10px] font-bold">導覽</span>
+            </button>
+            <button onclick="switchTab('info')" class="nav-btn w-1/4 flex flex-col items-center gap-1 text-textSub" data-tab="info">
+                <i class="fa-solid fa-circle-info text-xl"></i>
+                <span class="text-[10px] font-bold">資訊</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // --- 1. Firebase Config ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtBP6IENvkrindoGEWQ2sbCDS7mKkqvpQ",
+            authDomain: "travel-tool-from-hioklu-89719.firebaseapp.com",
+            projectId: "travel-tool-from-hioklu-89719",
+            storageBucket: "travel-tool-from-hioklu-89719.firebasestorage.app",
+            messagingSenderId: "823269459846",
+            appId: "1:823269459846:web:75fa1fad11087512a98e07"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // --- 2. Data & State ---
+        let tripData = {}; 
+        let accommodationData = []; 
+        let flightData = []; // New: Flight Data
+        let activeTab = 'plan';
+        let activeDate = ''; 
+        
+        const iconTypes = {
+            transport: { icon: 'fa-solid fa-suitcase-rolling', label: '交通' },
+            flight: { icon: 'fa-solid fa-plane-up', label: '航班' },
+            train: { icon: 'fa-solid fa-train-subway', label: '鐵路' },
+            bus: { icon: 'fa-solid fa-bus', label: '巴士' },
+            hotel: { icon: 'fa-solid fa-bed', label: '住宿' },
+            food: { icon: 'fa-solid fa-utensils', label: '餐飲' },
+            shop: { icon: 'fa-solid fa-bag-shopping', label: '購物' },
+            play: { icon: 'fa-solid fa-gamepad', label: '娛樂' },
+            ticket: { icon: 'fa-solid fa-ticket', label: '票券' },
+            star: { icon: 'fa-solid fa-star', label: '重點' },
+            camera: { icon: 'fa-solid fa-camera', label: '景點' },
+            entry: { icon: 'fa-solid fa-passport', label: '出入境' },
+        };
+
+        // --- 3. Core Functions ---
+
+        async function init() {
+            try {
+                // Fetch Itinerary
+                const snapshot = await db.collection('itinerary').get();
+                if (!snapshot.empty) {
+                    snapshot.forEach(doc => { tripData[doc.id] = doc.data().events || []; });
+                }
+
+                // Fetch Accommodations
+                const accSnapshot = await db.collection('accommodations').get();
+                accommodationData = [];
+                accSnapshot.forEach(doc => { accommodationData.push({ ...doc.data(), docId: doc.id }); });
+
+                // Fetch Flights
+                const flightSnapshot = await db.collection('flights').orderBy('date').get();
+                flightData = [];
+                flightSnapshot.forEach(doc => { flightData.push({ ...doc.data(), docId: doc.id }); });
+
+                setInitialDate();
+                renderHeaderInfo();
+                switchTab('plan');
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => document.getElementById('loading-overlay').style.display = 'none', 500);
+            } catch (error) {
+                console.error("Firebase Error:", error);
+                alert("資料載入失敗");
+            }
+        }
+
+        function setInitialDate() {
+            const sortedDates = Object.keys(tripData).sort();
+            if (sortedDates.length > 0) {
+                const todayStr = new Date().toISOString().split('T')[0];
+                activeDate = sortedDates.includes(todayStr) ? todayStr : sortedDates[0];
+            } else {
+                activeDate = new Date().toISOString().split('T')[0];
+                tripData[activeDate] = [];
+            }
+        }
+
+        async function saveToFirebase(date) {
+            try {
+                if(tripData[date]) {
+                    await db.collection('itinerary').doc(date).set({ events: tripData[date] });
+                } else {
+                    await db.collection('itinerary').doc(date).delete();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function getWeekday(dateStr) {
+            const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+            return days[new Date(dateStr).getDay()];
+        }
+
+        function calculateEndTime(startTime, durationMinutes) {
+            if (!durationMinutes || durationMinutes <= 0) return null;
+            const [hours, mins] = startTime.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, mins + parseInt(durationMinutes));
+            return date.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+        }
+
+        // --- 4. Render Logic ---
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const isActive = btn.dataset.tab === tab;
+                btn.classList.toggle('active', isActive);
+                btn.classList.toggle('text-textSub', !isActive);
+            });
+
+            const container = document.getElementById('app');
+            const fab = document.getElementById('fab-add');
+            
+            if (tab === 'plan') {
+                renderPlan(container);
+                fab.classList.remove('hidden');
+            } else {
+                fab.classList.add('hidden');
+                if (tab === 'guide') renderGuide(container);
+                else if (tab === 'info') renderInfo(container);
+            }
+            window.scrollTo(0, 0);
+        }
+
+        function renderHeaderInfo() {
+            const sortedDates = Object.keys(tripData).sort();
+            const dayIndex = sortedDates.indexOf(activeDate);
+            const badge = document.getElementById('header-day-badge');
+            badge.innerText = dayIndex >= 0 ? `DAY ${dayIndex + 1}` : "Trip";
+
+            const weather = document.getElementById('weather-badge');
+            const d = new Date(activeDate);
+            weather.innerHTML = `
+                <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank" class="flex items-center gap-1.5">
+                    <span class="font-mono font-bold text-slate-400">${d.getMonth()+1}/${d.getDate()}</span>
+                    <i class="fa-solid fa-cloud-sun text-subAccent"></i>
+                </a>
+            `;
+        }
+
+        function renderPlan(container) {
+            let html = ``;
+            // Date Ribbon
+            html += `<div class="sticky top-[80px] z-30 bg-dark/95 backdrop-blur pb-3 pt-2 -mx-4 px-4 flex gap-2 overflow-x-auto no-scrollbar border-b border-white/5 mb-6 items-center">`;
+            const sortedDates = Object.keys(tripData).sort();
+            sortedDates.forEach(date => {
+                const isActive = date === activeDate;
+                const d = new Date(date);
+                const displayDate = `${d.getMonth()+1}/${d.getDate()} ${getWeekday(date)}`;
+                html += `
+                    <button onclick="changeDate('${date}')" class="flex-shrink-0 px-4 py-2 rounded-full border transition-all text-sm font-bold tracking-wide ${isActive ? 'bg-white text-dark border-white shadow-lg scale-105' : 'bg-transparent border-slate-600 text-slate-400 hover:border-slate-400'}">
+                        ${displayDate}
+                    </button>`;
+            });
+            // Buttons
+            html += `
+                <div class="flex gap-2 ml-1">
+                    <button onclick="openDateSettings('edit')" class="w-10 h-10 rounded-full border border-slate-600 bg-slate-800 text-slate-400 flex items-center justify-center hover:bg-slate-700 transition"><i class="fa-solid fa-gear"></i></button>
+                    <button onclick="openDateSettings('add')" class="w-10 h-10 rounded-full border border-dashed border-slate-500 text-slate-400 flex items-center justify-center hover:bg-slate-800 hover:text-white transition"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>`;
+
+            // Timeline
+            const events = (tripData[activeDate] || []).sort((a, b) => a.time.localeCompare(b.time));
+            html += `<div class="pb-24 animate-[fadeIn_0.3s_ease-out]">`;
+            if(events.length === 0) {
+                html += `<div class="flex flex-col items-center justify-center mt-20 text-slate-600 space-y-4"><i class="fa-regular fa-calendar-xmark text-4xl"></i><p>本日尚無行程</p></div>`;
+            } else {
+                events.forEach((item, index) => {
+                    const isLast = index === events.length - 1;
+                    const isImportant = item.isImportant;
+                    const typeConfig = iconTypes[item.type] || iconTypes.star;
+                    const endTime = calculateEndTime(item.time, item.duration);
+                    const timeDisplay = endTime ? `${item.time} - ${endTime}` : item.time;
+                    const durationDisplay = item.duration ? `<span class="opacity-60 ml-1">(${item.duration}m)</span>` : '';
+
+                    html += `
+                        <div class="flex gap-4 mb-2 group ${isLast ? 'last-item' : ''}">
+                            <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
+                                <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImportant ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
+                                <div class="timeline-line"></div>
+                            </div>
+                            <div class="flex-1 min-w-0 pb-6" onclick="openEditModal(${item.id})">
+                                <div class="trip-card ${isImportant ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between hover:bg-slate-700/50">
+                                    <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImportant ? '<i class="fa-solid fa-star text-accent text-xs"></i>' : ''}</div>
+                                    <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisplay}</span>${durationDisplay}</div>
+                                    <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-4 line-clamp-4">${item.desc || ''}</p>
+                                    <div class="mt-auto pt-2 flex gap-2">
+                                        ${item.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}" target="_blank" onclick="event.stopPropagation()" class="flex-1 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-lg py-2 text-center text-xs font-bold text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-location-arrow text-slate-300"></i> 導航</a>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        // --- GUIDE View (Flights) ---
+        // --- GUIDE View (Flights) ---
+function renderGuide(container) {
+    let flightHtml = '';
+    
+    if (flightData.length === 0) {
+        flightHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed">尚無航班資訊，請點擊新增</div>`;
+    } else {
+        flightData.forEach(f => {
+            flightHtml += `
+                <div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative mb-4">
+                    
+                    <div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center">
+                        <h2 class="font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}
+                        </h2>
+                        
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">
+                                ${f.date || ''}
+                            </span>
+                            <button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 space-y-4 text-sm relative">
+                        <div class="flex justify-between items-center">
+                            <div><div class="font-bold text-xl font-mono">${f.depTime}</div><div class="text-slate-400 text-xs">${f.depPort}</div></div>
+                            <div class="text-slate-500 flex flex-col items-center"><i class="fa-solid fa-arrow-right-long"></i><span class="text-[10px] mt-1 text-slate-600">${f.code}</span></div>
+                            <div class="text-right"><div class="font-bold text-xl font-mono">${f.arrTime}</div><div class="text-slate-400 text-xs">${f.arrPort}</div></div>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-slate-700/50">
+                            <div class="text-xs text-slate-500">訂位代號: <span class="font-mono text-accent font-bold">${f.pnr || '-'}</span></div>
+                            ${f.link ? `<a href="${f.link}" target="_blank" class="text-xs bg-accent/10 text-accent px-2 py-1 rounded font-bold">線上報到</a>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+            container.innerHTML = `
+                <div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]">
+                    <div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2">
+                        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3>
+                        <button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                    </div>
+                    ${flightHtml}
+                    
+                    <section class="bg-card rounded-xl border border-slate-700 p-4">
+                        <h2 class="font-bold text-white mb-3"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-subAccent"></i>USJ 重點</h2>
+                        <ul class="text-sm text-slate-300 list-disc list-inside space-y-1">
+                            <li>入園即抽「任天堂夜間整理券」。</li>
+                            <li>11:00 準時進任天堂 (快通)。</li>
+                            <li>15:00 準時進哈利波特 (快通)。</li>
+                        </ul>
+                    </section>
+                </div>
+            `;
+        }
+        
+        // --- Info View (Accommodations) ---
+        function renderInfo(container) {
+            let accHtml = '';
+            if (accommodationData.length === 0) {
+                accHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed">尚無住宿資訊，請點擊右側新增</div>`;
+            } else {
+                accommodationData.forEach(acc => {
+                    const mapLink = acc.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(acc.address)}` : '#';
+                    accHtml += `
+                        <div class="bg-card rounded-xl p-6 text-center border border-slate-700 relative group mb-4">
+                            <button onclick="openInfoModal('${acc.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <h2 class="text-xl font-bold text-white mb-1">${acc.title}</h2>
+                            <p class="text-sm text-slate-400 mb-4">${acc.subtitle || ''}</p>
+                            <div class="text-xs text-slate-500 mb-4 whitespace-pre-line">${acc.address || '無地址資訊'}</div>
+                            <a href="${mapLink}" target="_blank" class="inline-block bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-slate-600"><i class="fa-solid fa-location-arrow mr-1"></i> 導航至飯店</a>
+                        </div>
+                    `;
+                });
+            }
+
+            container.innerHTML = `
+                <div class="space-y-4 pb-24 animate-[fadeIn_0.3s_ease-out]">
+                    <div class="flex justify-between items-center px-1">
+                        <h3 class="text-sm font-bold text-slate-300">住宿資訊</h3>
+                        <button onclick="openInfoModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1 rounded-lg font-bold hover:opacity-90"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                    </div>
+                    ${accHtml}
+                    <div class="grid grid-cols-2 gap-4">
+                        <a href="https://www.jma.go.jp/bosai/forecast/" target="_blank" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2"><i class="fa-solid fa-cloud-sun-rain text-2xl text-blue-400"></i><span class="text-sm font-bold">天氣預報</span></a>
+                        <a href="https://goo.gl/maps/osaka" target="_blank" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2"><i class="fa-solid fa-map-location-dot text-2xl text-green-400"></i><span class="text-sm font-bold">Google Maps</span></a>
+                    </div>
+                    <div class="mt-8 pt-6 border-t border-slate-700">
+                        <h3 class="text-sm font-bold text-slate-400 mb-4 px-2">資料庫管理</h3>
+                        <button onclick="openJsonModal()" class="w-full py-3 rounded-xl bg-slate-800 border border-slate-600 text-accent font-bold mb-3 flex items-center justify-center gap-2 hover:bg-slate-700"><i class="fa-solid fa-file-import"></i> 貼上 JSON 匯入行程</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- Logic Handlers ---
+
+        function changeDate(date) {
+            activeDate = date;
+            renderHeaderInfo();
+            renderPlan(document.getElementById('app'));
+        }
+
+        // Date Settings
+        function openDateSettings(mode) {
+            const modal = document.getElementById('date-settings-modal');
+            const title = document.getElementById('date-modal-title');
+            const dateInput = document.getElementById('settings-day-date');
+            const deleteBtn = document.getElementById('btn-delete-day');
+            document.getElementById('date-modal-mode').value = mode;
+            if (mode === 'add') {
+                title.innerText = "新增旅遊日期";
+                dateInput.value = "";
+                deleteBtn.classList.add('hidden');
+            } else {
+                title.innerText = "編輯當前日期";
+                dateInput.value = activeDate; 
+                deleteBtn.classList.remove('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        async function confirmDateSettings() {
+            const mode = document.getElementById('date-modal-mode').value;
+            const newDate = document.getElementById('settings-day-date').value;
+            if (!newDate) return alert("請選擇日期");
+            if (mode === 'add') {
+                if (tripData[newDate]) return alert("該日期已存在");
+                tripData[newDate] = [];
+                activeDate = newDate;
+                await saveToFirebase(newDate);
+            } else if (mode === 'edit') {
+                if (newDate !== activeDate) {
+                    if (tripData[newDate] && !confirm("目標日期已存在，是否覆蓋？")) return;
+                    tripData[newDate] = tripData[activeDate];
+                    await saveToFirebase(newDate);
+                    await db.collection('itinerary').doc(activeDate).delete();
+                    delete tripData[activeDate];
+                    activeDate = newDate;
+                }
+            }
+            document.getElementById('date-settings-modal').classList.add('hidden');
+            setInitialDate(); renderHeaderInfo(); renderPlan(document.getElementById('app'));
+        }
+
+        async function deleteCurrentDay() {
+            if (!confirm(`確定要刪除 ${activeDate} 的所有行程嗎？`)) return;
+            const targetDate = activeDate;
+            delete tripData[targetDate];
+            await db.collection('itinerary').doc(targetDate).delete();
+            document.getElementById('date-settings-modal').classList.add('hidden');
+            setInitialDate(); renderHeaderInfo(); renderPlan(document.getElementById('app'));
+        }
+
+        // Accommodation
+        function openInfoModal(docId) {
+            const modal = document.getElementById('info-modal');
+            const deleteBtn = document.getElementById('btn-info-delete');
+            const titleEl = document.getElementById('info-modal-title');
+            document.getElementById('info-id').value = '';
+            document.getElementById('info-title').value = '';
+            document.getElementById('info-subtitle').value = '';
+            document.getElementById('info-address').value = '';
+            if (docId) {
+                const item = accommodationData.find(acc => acc.docId === docId);
+                if (item) {
+                    titleEl.innerText = "編輯住宿資訊";
+                    deleteBtn.classList.remove('hidden');
+                    document.getElementById('info-id').value = item.docId;
+                    document.getElementById('info-title').value = item.title;
+                    document.getElementById('info-subtitle').value = item.subtitle || '';
+                    document.getElementById('info-address').value = item.address || '';
+                }
+            } else {
+                titleEl.innerText = "新增住宿資訊";
+                deleteBtn.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        async function saveAccommodation() {
+            const docId = document.getElementById('info-id').value;
+            const title = document.getElementById('info-title').value;
+            if (!title) return alert("請輸入名稱");
+            const data = { title: title, subtitle: document.getElementById('info-subtitle').value, address: document.getElementById('info-address').value };
+            try {
+                if (docId) {
+                    await db.collection('accommodations').doc(docId).update(data);
+                    const idx = accommodationData.findIndex(a => a.docId === docId);
+                    if (idx !== -1) accommodationData[idx] = { ...data, docId };
+                } else {
+                    const docRef = await db.collection('accommodations').add(data);
+                    accommodationData.push({ ...data, docId: docRef.id });
+                }
+                document.getElementById('info-modal').classList.add('hidden');
+                renderInfo(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("儲存失敗"); }
+        }
+
+        async function deleteAccommodation() {
+            if (!confirm("確定要刪除？")) return;
+            const docId = document.getElementById('info-id').value;
+            try {
+                await db.collection('accommodations').doc(docId).delete();
+                accommodationData = accommodationData.filter(a => a.docId !== docId);
+                document.getElementById('info-modal').classList.add('hidden');
+                renderInfo(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("刪除失敗"); }
+        }
+
+        // Flights Logic
+        function openFlightModal(docId) {
+            const modal = document.getElementById('flight-modal');
+            const deleteBtn = document.getElementById('btn-flight-delete');
+            const titleEl = document.getElementById('flight-modal-title');
+            
+            // Reset fields
+            document.getElementById('flight-id').value = '';
+            document.getElementById('flight-airline').value = '';
+            document.getElementById('flight-code').value = '';
+            document.getElementById('flight-date').value = '';
+            document.getElementById('flight-dep-time').value = '';
+            document.getElementById('flight-dep-port').value = '';
+            document.getElementById('flight-arr-time').value = '';
+            document.getElementById('flight-arr-port').value = '';
+            document.getElementById('flight-pnr').value = '';
+            document.getElementById('flight-link').value = '';
+
+            if (docId) {
+                const item = flightData.find(f => f.docId === docId);
+                if (item) {
+                    titleEl.innerText = "編輯航班";
+                    deleteBtn.classList.remove('hidden');
+                    document.getElementById('flight-id').value = item.docId;
+                    document.getElementById('flight-airline').value = item.airline;
+                    document.getElementById('flight-code').value = item.code;
+                    document.getElementById('flight-date').value = item.date;
+                    document.getElementById('flight-dep-time').value = item.depTime;
+                    document.getElementById('flight-dep-port').value = item.depPort;
+                    document.getElementById('flight-arr-time').value = item.arrTime;
+                    document.getElementById('flight-arr-port').value = item.arrPort;
+                    document.getElementById('flight-pnr').value = item.pnr || '';
+                    document.getElementById('flight-link').value = item.link || '';
+                }
+            } else {
+                titleEl.innerText = "新增航班";
+                deleteBtn.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        async function saveFlight() {
+            const docId = document.getElementById('flight-id').value;
+            const data = {
+                airline: document.getElementById('flight-airline').value,
+                code: document.getElementById('flight-code').value,
+                date: document.getElementById('flight-date').value,
+                depTime: document.getElementById('flight-dep-time').value,
+                depPort: document.getElementById('flight-dep-port').value,
+                arrTime: document.getElementById('flight-arr-time').value,
+                arrPort: document.getElementById('flight-arr-port').value,
+                pnr: document.getElementById('flight-pnr').value,
+                link: document.getElementById('flight-link').value
+            };
+
+            if(!data.code || !data.date) return alert("請填寫航班代號與日期");
+
+            try {
+                if (docId) {
+                    await db.collection('flights').doc(docId).update(data);
+                    const idx = flightData.findIndex(f => f.docId === docId);
+                    if (idx !== -1) flightData[idx] = { ...data, docId };
+                } else {
+                    const docRef = await db.collection('flights').add(data);
+                    flightData.push({ ...data, docId: docRef.id });
+                }
+                // Sort by date/time
+                flightData.sort((a,b) => (a.date + a.depTime).localeCompare(b.date + b.depTime));
+                
+                document.getElementById('flight-modal').classList.add('hidden');
+                renderGuide(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("儲存失敗"); }
+        }
+
+        async function deleteFlight() {
+            if (!confirm("確定要刪除？")) return;
+            const docId = document.getElementById('flight-id').value;
+            try {
+                await db.collection('flights').doc(docId).delete();
+                flightData = flightData.filter(f => f.docId !== docId);
+                document.getElementById('flight-modal').classList.add('hidden');
+                renderGuide(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("刪除失敗"); }
+        }
+
+        // Itinerary Edit
+        function openEditModal(id) {
+            const iconContainer = document.getElementById('icon-selector');
+            iconContainer.innerHTML = Object.entries(iconTypes).map(([key, val]) => `
+                <div onclick="selectIcon('${key}')" class="icon-option flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer p-2 rounded-lg border border-transparent hover:bg-slate-700" data-type="${key}">
+                    <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white"><i class="${val.icon}"></i></div>
+                    <span class="text-[10px] text-slate-400">${val.label}</span>
+                </div>
+            `).join('');
+            const modal = document.getElementById('edit-modal');
+            const delBtn = document.getElementById('btn-delete');
+            document.getElementById('edit-id').value = '';
+            document.getElementById('edit-title').value = '';
+            document.getElementById('edit-time').value = '09:00';
+            document.getElementById('edit-duration').value = '';
+            document.getElementById('edit-desc').value = '';
+            document.getElementById('edit-location').value = '';
+            document.getElementById('edit-important').checked = false;
+            selectIcon('transport'); 
+            if (id) {
+                const item = tripData[activeDate].find(i => i.id === id);
+                if (!item) return;
+                document.getElementById('modal-title').innerText = "編輯行程";
+                delBtn.classList.remove('hidden');
+                document.getElementById('edit-id').value = item.id;
+                document.getElementById('edit-title').value = item.title;
+                document.getElementById('edit-time').value = item.time;
+                document.getElementById('edit-duration').value = item.duration || '';
+                document.getElementById('edit-desc').value = item.desc || '';
+                document.getElementById('edit-location').value = item.location || '';
+                document.getElementById('edit-important').checked = item.isImportant || false;
+                selectIcon(item.type || 'transport');
+            } else {
+                document.getElementById('modal-title').innerText = "新增行程";
+                delBtn.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function selectIcon(type) {
+            document.getElementById('edit-type').value = type;
+            document.querySelectorAll('.icon-option').forEach(el => {
+                if(el.dataset.type === type) {
+                    el.classList.add('bg-accent/20', 'border-accent');
+                    el.querySelector('div').classList.replace('bg-slate-700', 'bg-accent');
+                } else {
+                    el.classList.remove('bg-accent/20', 'border-accent');
+                    el.querySelector('div').classList.replace('bg-accent', 'bg-slate-700');
+                }
+            });
+        }
+
+        async function saveEvent() {
+            const idInput = document.getElementById('edit-id').value;
+            const title = document.getElementById('edit-title').value;
+            const time = document.getElementById('edit-time').value;
+            if(!title || !time) return alert("請填寫標題與時間");
+            const newEvent = {
+                id: idInput ? parseInt(idInput) : Date.now(),
+                title: title,
+                time: time,
+                duration: document.getElementById('edit-duration').value,
+                desc: document.getElementById('edit-desc').value,
+                location: document.getElementById('edit-location').value,
+                type: document.getElementById('edit-type').value,
+                isImportant: document.getElementById('edit-important').checked
+            };
+            let events = tripData[activeDate] || [];
+            if (idInput) {
+                const index = events.findIndex(e => e.id === parseInt(idInput));
+                if (index !== -1) events[index] = newEvent;
+            } else {
+                events.push(newEvent);
+            }
+            tripData[activeDate] = events;
+            document.getElementById('edit-modal').classList.add('hidden');
+            renderPlan(document.getElementById('app'));
+            await saveToFirebase(activeDate);
+        }
+
+        async function deleteEvent() {
+            if(!confirm("確定要刪除？")) return;
+            const idInput = document.getElementById('edit-id').value;
+            tripData[activeDate] = tripData[activeDate].filter(e => e.id !== parseInt(idInput));
+            document.getElementById('edit-modal').classList.add('hidden');
+            renderPlan(document.getElementById('app'));
+            await saveToFirebase(activeDate);
+        }
+
+        function openJsonModal() {
+            document.getElementById('json-input').value = ""; 
+            document.getElementById('json-modal').classList.remove('hidden');
+        }
+
+        function fillTemplate() {
+            const template = { "2026-01-24": [ { "id": 101, "time": "09:00", "duration": 210, "type": "flight", "title": "範例行程", "desc": "...", "isImportant": true } ] };
+            document.getElementById('json-input').value = JSON.stringify(template, null, 4);
+        }
+
+        async function confirmJsonImport() {
+            const inputStr = document.getElementById('json-input').value;
+            if (!inputStr.trim()) return alert("請輸入 JSON");
+            try {
+                const parsedData = JSON.parse(inputStr);
+                if (typeof parsedData !== 'object' || parsedData === null) throw new Error("格式錯誤");
+                if (!confirm("確定要匯入？")) return;
+                document.getElementById('loading-overlay').style.display = 'flex';
+                document.getElementById('loading-overlay').style.opacity = '1';
+                const batch = db.batch(); 
+                for (const [date, events] of Object.entries(parsedData)) {
+                    if (!Array.isArray(events)) continue;
+                    const docRef = db.collection('itinerary').doc(date);
+                    batch.set(docRef, { events: events });
+                }
+                await batch.commit();
+                tripData = parsedData;
+                setInitialDate();
+                renderHeaderInfo();
+                document.getElementById('json-modal').classList.add('hidden');
+                switchTab('plan');
+                alert("匯入成功！");
+            } catch (error) { console.error("JSON Error:", error); alert("匯入失敗：" + error.message); } 
+            finally { document.getElementById('loading-overlay').style.display = 'none'; }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
