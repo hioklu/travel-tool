@@ -306,6 +306,80 @@
         </div>
     </div>
 
+    <div id="park-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all scale-100 flex flex-col max-h-[90vh]">
+            <div class="flex-none mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-subAccent"></i> <span id="park-modal-title">新增票券資訊</span>
+                </h3>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2 space-y-3">
+                <input type="hidden" id="park-id">
+                
+                <div>
+                    <label class="text-xs text-textSub block mb-1">標題 (例如：USJ 攻略)</label>
+                    <input type="text" id="park-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                
+                <div>
+                    <label class="text-xs text-textSub block mb-1">地圖嵌入網址 (Embed URL)</label>
+                    <input type="text" id="park-map" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="<iframe src=...>">
+                </div>
+
+                <div>
+                    <label class="text-xs text-textSub block mb-2">快速連結 (最多 4 個)</label>
+                    <div id="park-links-container" class="space-y-2">
+                        </div>
+                    <button type="button" onclick="addParkLink()" class="mt-2 text-xs text-accent border border-accent/50 px-2 py-1 rounded hover:bg-accent/10">+ 新增連結</button>
+                </div>
+
+                <div>
+                    <label class="text-xs text-textSub block mb-1">說明 (列點)</label>
+                    <textarea id="park-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="每行一個重點..."></textarea>
+                </div>
+            </div>
+
+            <div class="flex-none flex gap-3 mt-4">
+                <button type="button" onclick="deletePark()" id="btn-park-delete" class="px-4 py-3 rounded-xl bg-red-900/30 text-red-400 border border-red-900/50 hidden"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="document.getElementById('park-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="savePark()" class="flex-1 py-3 rounded-xl bg-subAccent text-dark font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="highlight-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl transform transition-all scale-100 flex flex-col max-h-[90vh]">
+            <div class="flex-none mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-star text-blue-400"></i> <span id="highlight-modal-title">新增行程重點</span>
+                </h3>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto pr-2 space-y-3">
+                <input type="hidden" id="highlight-id">
+                
+                <div>
+                    <label class="text-xs text-textSub block mb-1">大標題 (例如：柯南巡禮)</label>
+                    <input type="text" id="highlight-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+
+                <div>
+                    <label class="text-xs text-textSub block mb-2">子項目 (地點/說明)</label>
+                    <div id="highlight-items-container" class="space-y-3">
+                        </div>
+                    <button type="button" onclick="addHighlightItem()" class="mt-2 text-xs text-accent border border-accent/50 px-2 py-1 rounded hover:bg-accent/10">+ 新增子項目</button>
+                </div>
+            </div>
+
+            <div class="flex-none flex gap-3 mt-4">
+                <button type="button" onclick="deleteHighlight()" id="btn-highlight-delete" class="px-4 py-3 rounded-xl bg-red-900/30 text-red-400 border border-red-900/50 hidden"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="document.getElementById('highlight-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="saveHighlight()" class="flex-1 py-3 rounded-xl bg-blue-500 text-white font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
     <div id="date-settings-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
             <h3 class="text-lg font-bold mb-4 text-white" id="date-modal-title">日期設定</h3>
@@ -373,6 +447,8 @@
         let tripData = {}; 
         let accommodationData = []; 
         let flightData = []; 
+        let parkData = []; // New: Park Data
+        let highlightData = []; // New: Highlight Data
         let activeTab = 'plan';
         let activeDate = ''; 
         
@@ -395,18 +471,31 @@
 
         async function init() {
             try {
+                // Fetch Itinerary
                 const snapshot = await db.collection('itinerary').get();
                 if (!snapshot.empty) {
                     snapshot.forEach(doc => { tripData[doc.id] = doc.data().events || []; });
                 }
 
+                // Fetch Accommodations
                 const accSnapshot = await db.collection('accommodations').get();
                 accommodationData = [];
                 accSnapshot.forEach(doc => { accommodationData.push({ ...doc.data(), docId: doc.id }); });
 
+                // Fetch Flights
                 const flightSnapshot = await db.collection('flights').orderBy('date').get();
                 flightData = [];
                 flightSnapshot.forEach(doc => { flightData.push({ ...doc.data(), docId: doc.id }); });
+
+                // Fetch Parks
+                const parkSnapshot = await db.collection('parks').get();
+                parkData = [];
+                parkSnapshot.forEach(doc => { parkData.push({ ...doc.data(), docId: doc.id }); });
+
+                // Fetch Highlights
+                const highlightSnapshot = await db.collection('highlights').get();
+                highlightData = [];
+                highlightSnapshot.forEach(doc => { highlightData.push({ ...doc.data(), docId: doc.id }); });
 
                 setInitialDate();
                 renderHeaderInfo();
@@ -554,27 +643,29 @@
             container.innerHTML = html;
         }
 
-        // --- GUIDE View (Flights) ---
+        // --- GUIDE View (Modified) ---
         function renderGuide(container) {
-            let flightHtml = '';
+            let html = `<div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]">`;
+
+            // 1. Flights Section
+            html += `
+                <div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2">
+                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3>
+                    <button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                </div>
+            `;
             
             if (flightData.length === 0) {
-                flightHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed">尚無航班資訊，請點擊新增</div>`;
+                html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無航班資訊</div>`;
             } else {
                 flightData.forEach(f => {
-                    flightHtml += `
+                    html += `
                         <div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative mb-4">
                             <div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center">
-                                <h2 class="font-bold text-white flex items-center gap-2">
-                                    <i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}
-                                </h2>
+                                <h2 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}</h2>
                                 <div class="flex items-center gap-3">
-                                    <span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">
-                                        ${f.date || ''}
-                                    </span>
-                                    <button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors">
-                                        <i class="fa-solid fa-pen text-[10px]"></i>
-                                    </button>
+                                    <span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">${f.date || ''}</span>
+                                    <button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-pen text-[10px]"></i></button>
                                 </div>
                             </div>
                             <div class="p-4 space-y-4 text-sm relative">
@@ -592,22 +683,76 @@
                     `;
                 });
             }
-            container.innerHTML = `
-                <div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]">
-                    <div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2">
-                        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3>
-                        <button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
-                    </div>
-                    ${flightHtml}
-                    
-                    <section class="bg-card rounded-xl border border-slate-700 p-4">
-                        <h2 class="font-bold text-white mb-3"><i class="fa-solid fa-wand-magic-sparkles mr-2 text-subAccent"></i>USJ 重點</h2>
-                        <ul class="text-sm text-slate-300 list-disc list-inside space-y-1">
-                            <li>入園即抽「任天堂夜間整理券」。</li>
-                        </ul>
-                    </section>
+
+            // 2. Park Info Section
+            html += `
+                <div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8">
+                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket mr-2 text-subAccent"></i>票券資訊</h3>
+                    <button onclick="openParkModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
                 </div>
             `;
+
+            if (parkData.length === 0) {
+                html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無票券資訊</div>`;
+            } else {
+                parkData.forEach(p => {
+                    html += `
+                        <div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group">
+                            <button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>
+                            
+                            ${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}
+                            
+                            ${p.links && p.links.length > 0 ? `
+                                <div class="grid grid-cols-2 gap-2 mb-4">
+                                    ${p.links.map(l => `
+                                        <a href="${l.url}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1">
+                                            <i class="${l.icon || 'fa-solid fa-link'} text-lg text-subAccent"></i> ${l.title}
+                                        </a>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            ${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            // 3. Highlights Section
+            html += `
+                <div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8">
+                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star mr-2 text-blue-400"></i>行程重點</h3>
+                    <button onclick="openHighlightModal(null)" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                </div>
+            `;
+
+            if (highlightData.length === 0) {
+                html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed">尚無重點資訊</div>`;
+            } else {
+                highlightData.forEach(h => {
+                    html += `
+                        <div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative">
+                            <button onclick="openHighlightModal('${h.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
+                            <h2 class="font-bold text-white mb-4 text-lg border-l-4 border-blue-500 pl-3">${h.title}</h2>
+                            <div class="space-y-4 pl-1">
+                                ${h.items ? h.items.map((item, idx) => `
+                                    <div class="flex gap-3 items-start group">
+                                        <span class="bg-blue-900 text-blue-200 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${idx + 1}</span>
+                                        <div>
+                                            <div class="font-bold text-sm text-blue-200">${item.subtitle}</div>
+                                            <div class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</div>
+                                        </div>
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += `</div>`;
+            container.innerHTML = html;
         }
         
         // --- Info View (Accommodations) ---
@@ -764,14 +909,13 @@
             } catch(e) { console.error(e); alert("刪除失敗"); }
         }
 
-        // Flights Logic - Refactored for Mobile Modal
+        // Flights Logic
         function openFlightModal(docId) {
             const modal = document.getElementById('flight-modal');
             const modalContent = modal.querySelector('.glass-modal');
             const deleteBtn = document.getElementById('btn-flight-delete');
             const titleEl = document.getElementById('flight-modal-title');
             
-            // Reset fields
             document.getElementById('flight-id').value = '';
             document.getElementById('flight-airline').value = '';
             document.getElementById('flight-code').value = '';
@@ -804,7 +948,6 @@
                 deleteBtn.classList.add('hidden');
             }
             
-            // Show modal with animation
             modal.classList.remove('hidden');
             requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
@@ -851,9 +994,7 @@
                     const docRef = await db.collection('flights').add(data);
                     flightData.push({ ...data, docId: docRef.id });
                 }
-                // Sort by date/time
                 flightData.sort((a,b) => (a.date + a.depTime).localeCompare(b.date + b.depTime));
-                
                 closeFlightModal();
                 renderGuide(document.getElementById('app'));
             } catch(e) { console.error(e); alert("儲存失敗"); }
@@ -870,12 +1011,184 @@
             } catch(e) { console.error(e); alert("刪除失敗"); }
         }
 
-        // Itinerary Edit - Refactored for Mobile Modal
-        function openEditModal(id) {
-            const modal = document.getElementById('edit-modal');
-            const modalContent = modal.querySelector('.glass-modal');
+        // --- Park Logic (NEW) ---
+        function openParkModal(docId) {
+            const modal = document.getElementById('park-modal');
+            const deleteBtn = document.getElementById('btn-park-delete');
+            const titleEl = document.getElementById('park-modal-title');
+            const linksContainer = document.getElementById('park-links-container');
             
-            // Render Icons
+            document.getElementById('park-id').value = '';
+            document.getElementById('park-title').value = '';
+            document.getElementById('park-map').value = '';
+            document.getElementById('park-desc').value = '';
+            linksContainer.innerHTML = '';
+
+            if (docId) {
+                const item = parkData.find(p => p.docId === docId);
+                if (item) {
+                    titleEl.innerText = "編輯票券資訊";
+                    deleteBtn.classList.remove('hidden');
+                    document.getElementById('park-id').value = item.docId;
+                    document.getElementById('park-title').value = item.title;
+                    document.getElementById('park-map').value = item.map || '';
+                    document.getElementById('park-desc').value = item.desc || '';
+                    
+                    if(item.links && item.links.length > 0) {
+                        item.links.forEach(l => addParkLink(l.title, l.url, l.icon));
+                    }
+                }
+            } else {
+                titleEl.innerText = "新增票券資訊";
+                deleteBtn.classList.add('hidden');
+                addParkLink(); // Add one empty link field by default
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function addParkLink(title = '', url = '', icon = 'fa-solid fa-link') {
+            const container = document.getElementById('park-links-container');
+            const div = document.createElement('div');
+            div.className = 'grid grid-cols-7 gap-2 items-center';
+            div.innerHTML = `
+                <div class="col-span-2"><input type="text" class="link-title w-full bg-dark border border-slate-600 rounded p-2 text-xs text-white" placeholder="標題" value="${title}"></div>
+                <div class="col-span-4"><input type="text" class="link-url w-full bg-dark border border-slate-600 rounded p-2 text-xs text-white" placeholder="URL" value="${url}"></div>
+                <div class="col-span-1 text-center"><button type="button" onclick="this.parentElement.parentElement.remove()" class="text-red-400"><i class="fa-solid fa-times"></i></button></div>
+            `;
+            container.appendChild(div);
+        }
+
+        async function savePark() {
+            const docId = document.getElementById('park-id').value;
+            const title = document.getElementById('park-title').value;
+            if(!title) return alert("請輸入標題");
+
+            const links = [];
+            document.querySelectorAll('#park-links-container > div').forEach(div => {
+                const lTitle = div.querySelector('.link-title').value;
+                const lUrl = div.querySelector('.link-url').value;
+                if(lTitle && lUrl) links.push({ title: lTitle, url: lUrl, icon: 'fa-solid fa-ticket' });
+            });
+
+            const data = {
+                title: title,
+                map: document.getElementById('park-map').value,
+                desc: document.getElementById('park-desc').value,
+                links: links
+            };
+
+            try {
+                if (docId) {
+                    await db.collection('parks').doc(docId).update(data);
+                    const idx = parkData.findIndex(p => p.docId === docId);
+                    if (idx !== -1) parkData[idx] = { ...data, docId };
+                } else {
+                    const docRef = await db.collection('parks').add(data);
+                    parkData.push({ ...data, docId: docRef.id });
+                }
+                document.getElementById('park-modal').classList.add('hidden');
+                renderGuide(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("儲存失敗"); }
+        }
+
+        async function deletePark() {
+            if (!confirm("確定要刪除？")) return;
+            const docId = document.getElementById('park-id').value;
+            try {
+                await db.collection('parks').doc(docId).delete();
+                parkData = parkData.filter(p => p.docId !== docId);
+                document.getElementById('park-modal').classList.add('hidden');
+                renderGuide(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("刪除失敗"); }
+        }
+
+        // --- Highlight Logic (NEW) ---
+        function openHighlightModal(docId) {
+            const modal = document.getElementById('highlight-modal');
+            const deleteBtn = document.getElementById('btn-highlight-delete');
+            const titleEl = document.getElementById('highlight-modal-title');
+            const itemsContainer = document.getElementById('highlight-items-container');
+            
+            document.getElementById('highlight-id').value = '';
+            document.getElementById('highlight-title').value = '';
+            itemsContainer.innerHTML = '';
+
+            if (docId) {
+                const item = highlightData.find(h => h.docId === docId);
+                if (item) {
+                    titleEl.innerText = "編輯行程重點";
+                    deleteBtn.classList.remove('hidden');
+                    document.getElementById('highlight-id').value = item.docId;
+                    document.getElementById('highlight-title').value = item.title;
+                    
+                    if(item.items && item.items.length > 0) {
+                        item.items.forEach(sub => addHighlightItem(sub.subtitle, sub.desc));
+                    }
+                }
+            } else {
+                titleEl.innerText = "新增行程重點";
+                deleteBtn.classList.add('hidden');
+                addHighlightItem();
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function addHighlightItem(subtitle = '', desc = '') {
+            const container = document.getElementById('highlight-items-container');
+            const div = document.createElement('div');
+            div.className = 'bg-slate-800/50 p-2 rounded border border-slate-700 relative';
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-2 text-red-400 text-xs"><i class="fa-solid fa-times"></i></button>
+                <input type="text" class="sub-title w-full bg-transparent border-b border-slate-600 mb-2 p-1 text-sm text-blue-200 focus:outline-none" placeholder="子標題 (地點)" value="${subtitle}">
+                <textarea class="sub-desc w-full bg-transparent text-xs text-slate-400 focus:outline-none" rows="2" placeholder="說明...">${desc}</textarea>
+            `;
+            container.appendChild(div);
+        }
+
+        async function saveHighlight() {
+            const docId = document.getElementById('highlight-id').value;
+            const title = document.getElementById('highlight-title').value;
+            if(!title) return alert("請輸入大標題");
+
+            const items = [];
+            document.querySelectorAll('#highlight-items-container > div').forEach(div => {
+                const subTitle = div.querySelector('.sub-title').value;
+                const subDesc = div.querySelector('.sub-desc').value;
+                if(subTitle) items.push({ subtitle: subTitle, desc: subDesc });
+            });
+
+            const data = {
+                title: title,
+                items: items
+            };
+
+            try {
+                if (docId) {
+                    await db.collection('highlights').doc(docId).update(data);
+                    const idx = highlightData.findIndex(h => h.docId === docId);
+                    if (idx !== -1) highlightData[idx] = { ...data, docId };
+                } else {
+                    const docRef = await db.collection('highlights').add(data);
+                    highlightData.push({ ...data, docId: docRef.id });
+                }
+                document.getElementById('highlight-modal').classList.add('hidden');
+                renderGuide(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("儲存失敗"); }
+        }
+
+        async function deleteHighlight() {
+            if (!confirm("確定要刪除？")) return;
+            const docId = document.getElementById('highlight-id').value;
+            try {
+                await db.collection('highlights').doc(docId).delete();
+                highlightData = highlightData.filter(h => h.docId !== docId);
+                document.getElementById('highlight-modal').classList.add('hidden');
+                renderGuide(document.getElementById('app'));
+            } catch(e) { console.error(e); alert("刪除失敗"); }
+        }
+
+        // Itinerary Edit
+        function openEditModal(id) {
             const iconContainer = document.getElementById('icon-selector');
             iconContainer.innerHTML = Object.entries(iconTypes).map(([key, val]) => `
                 <div onclick="selectIcon('${key}')" class="icon-option flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer p-2 rounded-xl border border-transparent hover:bg-white/5 transition active:scale-95" data-type="${key}" style="min-width: 60px;">
@@ -884,10 +1197,11 @@
                 </div>
             `).join('');
 
+            const modal = document.getElementById('edit-modal');
+            const modalContent = modal.querySelector('.glass-modal');
             const delBtn = document.getElementById('btn-delete');
             const titleEl = document.getElementById('modal-title');
             
-            // Reset
             document.getElementById('edit-id').value = '';
             document.getElementById('edit-title').value = '';
             document.getElementById('edit-time').value = '09:00';
@@ -915,7 +1229,6 @@
                 delBtn.classList.add('hidden');
             }
             
-            // Show modal with animation
             modal.classList.remove('hidden');
             requestAnimationFrame(() => {
                 modal.classList.remove('opacity-0');
