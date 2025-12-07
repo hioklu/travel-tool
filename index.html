@@ -1022,16 +1022,112 @@
         }
 
         function renderGuide(container) {
-            let html = `<div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]"><div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3><button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button></div>`;
-            if (flightData.length === 0) html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無航班資訊</div>`;
-            else { flightData.forEach(f => { html += `<div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative mb-4"><div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center"><h2 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}</h2><div class="flex items-center gap-3"><span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">${f.date || ''}</span><button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors edit-trigger"><i class="fa-solid fa-pen text-[10px]"></i></button></div></div><div class="p-4 space-y-4 text-sm relative"><div class="flex justify-between items-center"><div><div class="font-bold text-xl font-mono">${f.depTime}</div><div class="text-slate-400 text-xs">${f.depPort}</div></div><div class="text-slate-500 flex flex-col items-center"><i class="fa-solid fa-arrow-right-long"></i><span class="text-[10px] mt-1 text-slate-600">${f.code}</span></div><div class="text-right"><div class="font-bold text-xl font-mono">${f.arrTime}</div><div class="text-slate-400 text-xs">${f.arrPort}</div></div></div><div class="flex justify-between items-center pt-2 border-t border-slate-700/50"><div class="text-xs text-slate-500">訂位代號: <span class="font-mono text-accent font-bold">${f.pnr || '-'}</span></div>${f.link ? `<a href="${f.link}" target="_blank" class="text-xs bg-accent/10 text-accent px-2 py-1 rounded font-bold">線上報到</a>` : ''}</div></div></div>`; }); }
-            html += `<div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket mr-2 text-subAccent"></i>票券資訊</h3><button onclick="openParkModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button></div>`;
-            if (parkData.length === 0) html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無票券資訊</div>`;
-            else { parkData.forEach(p => { html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group"><button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button><h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}${p.links && p.links.length > 0 ? `<div class="grid grid-cols-2 gap-2 mb-4">${p.links.map(l => `<a href="${l.url}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1"><i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}</a>`).join('')}</div>` : ''}${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}</div>`; }); }
-            html += `<div class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star mr-2 text-blue-400"></i>行程重點</h3><button onclick="openHighlightModal(null)" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button></div>`;
-            if (highlightData.length === 0) html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl">尚無重點資訊</div>`;
-            else { highlightData.forEach(h => { html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative"><button onclick="openHighlightModal('${h.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button><h2 class="font-bold text-white mb-4 text-lg border-l-4 border-blue-500 pl-3">${h.title}</h2><div class="space-y-4 pl-1">${h.items ? h.items.map((item, idx) => `<div class="flex gap-3 items-start group"><span class="bg-blue-900 text-blue-200 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${idx+1}</span><div><div class="font-bold text-sm text-blue-200">${item.subtitle}</div><div class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</div></div></div>`).join('') : ''}</div></div>`; }); }
-            html += `</div>`; container.innerHTML = html;
+            // 1. 定義置頂的頁籤導覽列 (使用 sticky 定位，top 計算避開 header)
+            let html = `
+            <div class="sticky z-30 bg-slate-900/95 backdrop-blur border-b border-white/5 py-3 px-4 flex justify-center gap-3 overflow-x-auto no-scrollbar mb-6 -mx-4" style="top: calc(60px + env(safe-area-inset-top));">
+                <button onclick="scrollToGuideSection('guide-flight')" class="flex-shrink-0 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-plane-up text-accent"></i> 航班
+                </button>
+                <button onclick="scrollToGuideSection('guide-ticket')" class="flex-shrink-0 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-ticket text-subAccent"></i> 票券
+                </button>
+                <button onclick="scrollToGuideSection('guide-highlight')" class="flex-shrink-0 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
+                    <i class="fa-solid fa-star text-blue-400"></i> 重點
+                </button>
+            </div>
+    <div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]">`;
+
+    // --- 航班區塊 (加入 id="guide-flight") ---
+    html += `<div id="guide-flight" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 scroll-mt-32">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3>
+                <button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+             </div>`;
+    
+    if (flightData.length === 0) {
+        html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無航班資訊</div>`;
+    } else {
+        flightData.forEach(f => {
+            html += `<div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative mb-4">
+                        <div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center">
+                            <h2 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}</h2>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">${f.date || ''}</span>
+                                <button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors edit-trigger"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            </div>
+                        </div>
+                        <div class="p-4 space-y-4 text-sm relative">
+                            <div class="flex justify-between items-center">
+                                <div><div class="font-bold text-xl font-mono">${f.depTime}</div><div class="text-slate-400 text-xs">${f.depPort}</div></div>
+                                <div class="text-slate-500 flex flex-col items-center"><i class="fa-solid fa-arrow-right-long"></i><span class="text-[10px] mt-1 text-slate-600">${f.code}</span></div>
+                                <div class="text-right"><div class="font-bold text-xl font-mono">${f.arrTime}</div><div class="text-slate-400 text-xs">${f.arrPort}</div></div>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-slate-700/50">
+                                <div class="text-xs text-slate-500">訂位代號: <span class="font-mono text-accent font-bold">${f.pnr || '-'}</span></div>
+                                ${f.link ? `<a href="${f.link}" target="_blank" class="text-xs bg-accent/10 text-accent px-2 py-1 rounded font-bold">線上報到</a>` : ''}
+                            </div>
+                        </div>
+                    </div>`;
+        });
+    }
+
+    // --- 票券區塊 (加入 id="guide-ticket") ---
+    html += `<div id="guide-ticket" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8 scroll-mt-32">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket mr-2 text-subAccent"></i>票券資訊</h3>
+                <button onclick="openParkModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+             </div>`;
+
+    if (parkData.length === 0) {
+        html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無票券資訊</div>`;
+    } else {
+        parkData.forEach(p => {
+            html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group">
+                        <button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>
+                        ${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}
+                        ${p.links && p.links.length > 0 ? `<div class="grid grid-cols-2 gap-2 mb-4">${p.links.map(l => `<a href="${l.url}" target="_blank" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1"><i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}</a>`).join('')}</div>` : ''}
+                        ${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}
+                    </div>`;
+        });
+    }
+
+    // --- 重點區塊 (加入 id="guide-highlight") ---
+    html += `<div id="guide-highlight" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8 scroll-mt-32">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star mr-2 text-blue-400"></i>行程重點</h3>
+                <button onclick="openHighlightModal(null)" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+             </div>`;
+
+    if (highlightData.length === 0) {
+        html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl">尚無重點資訊</div>`;
+    } else {
+        highlightData.forEach(h => {
+            html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative">
+                        <button onclick="openHighlightModal('${h.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <h2 class="font-bold text-white mb-4 text-lg border-l-4 border-blue-500 pl-3">${h.title}</h2>
+                        <div class="space-y-4 pl-1">
+                            ${h.items ? h.items.map((item, idx) => `<div class="flex gap-3 items-start group"><span class="bg-blue-900 text-blue-200 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${idx + 1}</span><div><div class="font-bold text-sm text-blue-200">${item.subtitle}</div><div class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</div></div></div>`).join('') : ''}
+                        </div>
+                    </div>`;
+        });
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+        // --- 新增：導覽頁面滑動定位函式 ---
+        function scrollToGuideSection(id) {
+            const element = document.getElementById(id);
+            if (!element) return;
+    
+            // 計算偏移量：Header 高度 (約70px) + 頁籤高度 (約50px) + 一點緩衝
+            // 這裡設定 130px 可以讓標題停在視線舒適的位置
+            const headerOffset = 130; 
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+            });
         }
 
         function renderInfo(container) {
