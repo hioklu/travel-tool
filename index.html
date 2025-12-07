@@ -122,7 +122,17 @@
             top: env(safe-area-inset-top);
         }
 
-        .timeline-line { position: absolute; left: 50%; transform: translateX(-50%); top: 45px; bottom: -30px; width: 2px; background-color: #334155; z-index: 0; }
+        /* 修改後的 timeline-line */
+        .timeline-line {
+            width: 2px;
+            background-color: #334155;
+            /* 關鍵：讓線條佔據剩下的所有垂直空間 */
+            flex-grow: 1; 
+            /* 稍微與 Icon 保持一點距離，若希望完全緊貼可移除 mt-1 */
+            margin-top: 3px; 
+            margin-bottom: 4px;
+        }
+
         .last-item .timeline-line { display: none; }
         
         /* FAB Position Fix for PWA Safe Area */
@@ -915,7 +925,7 @@
                     
                     // Swipe Structure
                     html += `
-                        <div class="flex gap-4 mb-2 group">
+                        <div class="flex gap-2 mb-1 group">
                             <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
                                 <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
                                 <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
@@ -929,7 +939,7 @@
                                     <div class="swipe-content trip-card ${isImp ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between" ${clickAttr}>
                                         <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}</div>
                                         <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisp}</span>${durDisp}</div>
-                                        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-4 line-clamp-4">${item.desc || ''}</p>
+                                        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-4 line-clamp-10">${item.desc || ''}</p>
                                         <div class="mt-auto pt-2 flex gap-2">
                                             ${item.location ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}" target="_blank" onclick="event.stopPropagation()" class="flex-1 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-lg py-2 text-center text-xs font-bold text-white transition flex items-center justify-center gap-2"><i class="fa-solid fa-location-arrow text-slate-300"></i> 導航</a>` : ''}
                                         </div>
