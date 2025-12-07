@@ -309,7 +309,7 @@
                     </div>
                     <p class="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-2 truncate">
                         <span id="app-trip-desc" class="truncate">...</span>
-                        <span id="read-only-badge" class="hidden text-[10px] bg-slate-700 text-slate-300 px-1.5 rounded border border-slate-600 flex-shrink-0">唯讀</span>
+                        <span id="read-only-badge" class="hidden text-[10px] bg-slate-700 text-slate-300 px-1.5 rounded border border-slate-600 flex-shrink-0">僅供檢視</span>
                     </p>
                 </div>
             </div>
@@ -393,7 +393,7 @@
                 <div>
                     <h4 class="text-sm font-bold text-white mb-2">天氣地點設定</h4>
                     <div class="flex gap-2 mb-1">
-                        <input type="text" id="settings-weather-city" placeholder="輸入城市英文 (ex: Osaka)" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
+                        <input type="text" id="settings-weather-city" placeholder="輸入城市英文 (ex: Osaka)" class="w-[250px] bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
                         <button onclick="saveWeatherLocation()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">儲存</button>
                     </div>
                     <p class="text-[10px] text-slate-500">輸入城市後，系統將自動抓取當前天氣</p>
@@ -402,7 +402,7 @@
                 <div class="flex items-center justify-between border-t border-slate-700 pt-4">
                     <div>
                         <h4 class="text-sm font-bold text-white">允許訪客檢視 (公開)</h4>
-                        <p class="text-xs text-slate-400">開啟後，任何人只要有 ID 即可檢視行程(唯讀)</p>
+                        <p class="text-xs text-slate-400">開啟後，任何人只要有 ID 即可檢視行程</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="settings-is-public" class="sr-only peer" onchange="togglePublicStatus()">
@@ -413,7 +413,7 @@
                 <div>
                     <h4 class="text-sm font-bold text-white mb-2">協作者 (可編輯)</h4>
                     <div class="flex gap-2 mb-3">
-                        <input type="email" id="collab-email" placeholder="輸入 Email" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
+                        <input type="email" id="collab-email" placeholder="輸入 Email" class="w-[250px] bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
                         <button onclick="addCollaborator()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">新增</button>
                     </div>
                     <div id="collab-list" class="space-y-2 max-h-[150px] overflow-y-auto"></div>
@@ -931,7 +931,7 @@
                                 <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
                                 <div class="timeline-line"></div>
                             </div>
-                            <div class="flex-1 min-w-0 pb-6">
+                            <div class="flex-1 min-w-0 pb-4">
                                 <div class="swipe-card-wrapper">
                                     <div class="swipe-actions">
                                         <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
