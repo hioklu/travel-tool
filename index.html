@@ -1263,16 +1263,16 @@
                 <i class="fa-solid fa-file-import"></i> 貼上 JSON 匯入行程
             </button>
         </div>
-
+        
         <div class="text-center mt-10 mb-6 opacity-40 hover:opacity-80 transition-opacity select-none">
-            <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.0</p>
+            <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.1</p>
             <p class="text-[10px] text-slate-500 font-display font-bold mt-1">
                 Powered by <span class="text-accent">Hioklu</span>
             </p>
         </div>
     </div>`;
 }
-
+        // --- 版本資訊 ---
         // --- CRUD / Logic ---
         function openDateSettings(m) { const mod=document.getElementById('date-settings-modal'); document.getElementById('date-modal-mode').value=m; const inp=document.getElementById('settings-day-date'); const del=document.getElementById('btn-delete-day'); if(m==='add'){ document.getElementById('date-modal-title').innerText='新增日期'; inp.value=''; del.classList.add('hidden'); }else{ document.getElementById('date-modal-title').innerText='編輯日期'; inp.value=activeDate; del.classList.remove('hidden'); } mod.classList.remove('hidden'); }
         async function saveEvent() {
