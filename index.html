@@ -32,10 +32,10 @@
                         display: ['"Poppins"', 'sans-serif'],
                     },
                     colors: {
-                        dark: '#0f172a',       
-                        card: '#1e293b',       
+                        dark: '#0f172a',        
+                        card: '#1e293b',        
                         cardLight: '#334155', 
-                        accent: '#a56ce6',     
+                        accent: '#a56ce6',      
                         subAccent: '#fbbf24', 
                         textMain: '#f8fafc',
                         textSub: '#94a3b8',
@@ -94,7 +94,7 @@
         
         .glass-modal { background: rgba(30, 41, 59, 0.98); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
 
-        /* --- Hide Header Logic (Hide completely when scrolling down, show only at very top) --- */
+        /* --- Hide Header Logic --- */
         body.header-hidden .view-section.active header {
             transform: translate(-50%, -100%);
         }
@@ -111,9 +111,6 @@
             padding-left: 1rem;
             padding-right: 1rem;
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            
-            /* Logic: When header is visible (approx 70px + safe-area), it sits below it. 
-               When header hides, we want it to slide up to safe-area-inset-top */
             top: calc(60px + env(safe-area-inset-top)); 
         }
 
@@ -126,14 +123,10 @@
         .timeline-line {
             width: 2px;
             background-color: #334155;
-            /* 關鍵：讓線條佔據剩下的所有垂直空間 */
             flex-grow: 2; 
-            /* 稍微與 Icon 保持一點距離，若希望完全緊貼可移除 mt-1 */
             margin-top: 3px; 
             margin-bottom: 4px;
         }
-
-        .last-item .timeline-line { display: none; }
 
         .group:last-child .timeline-line {
            display: none;
@@ -142,7 +135,6 @@
         /* FAB Position Fix for PWA Safe Area */
         .fab { 
             position: fixed; 
-            /* Bottom = Navbar Height (approx 64) + Safe Area + Spacing */
             bottom: calc(80px + env(safe-area-inset-bottom)); 
             right: 20px; 
             margin-right: calc((100vw - 480px) / 2);
@@ -183,7 +175,7 @@
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            background-color: #ef4444; /* Red background */
+            background-color: #ef4444; 
             z-index: 0;
             padding-right: 20px;
             border-radius: 12px;
@@ -191,25 +183,22 @@
         .swipe-content {
             position: relative;
             z-index: 10;
-            background-color: #1e293b; /* Card BG */
+            background-color: #1e293b; 
             transition: transform 0.2s ease-out;
             width: 100%;
             height: 100%;
         }
         .trip-card {
-            border-radius: 0; /* Reset border radius as wrapper has it */
-            box-shadow: none; /* Shadow on wrapper maybe? */
+            border-radius: 0; 
+            box-shadow: none; 
             border-left-width: 5px;
         }
         /* --- Feature 3: 重要行程卡片樣式修正 --- */
         .trip-card.important {
-            /* 使用紫色漸層背景，並且覆蓋原本的深灰色背景 */
             background: linear-gradient(130deg, #2d1f42f8 0%, #1e293b 60%,#1e293b 100%) !important; 
-            /* 稍微調整左側邊框顏色使其更協調，非半透明 */
             border-left-color: #c4b5fd !important; 
         }
         
-        /* 確保內容文字在紫色背景上依然清晰 (原本已是白色，這裡加強陰影對比) */
         .trip-card.important h3, 
         .trip-card.important p, 
         .trip-card.important .fa-clock,
@@ -228,11 +217,11 @@
         </div>
     </div>
 
-<div id="pull-refresh-indicator" class="fixed top-0 left-0 w-full flex justify-center items-start pt-4 z-[90] pointer-events-none transition-transform duration-200" style="transform: translateY(-100px);">
-    <div class="bg-slate-800/90 backdrop-blur text-white w-10 h-10 rounded-full shadow-lg border border-slate-600 flex items-center justify-center">
-        <i id="refresh-icon" class="fa-solid fa-arrow-rotate-right text-accent"></i>
+    <div id="pull-refresh-indicator" class="fixed top-0 left-0 w-full flex justify-center items-start pt-4 z-[90] pointer-events-none transition-transform duration-200" style="transform: translateY(-100px);">
+        <div class="bg-slate-800/90 backdrop-blur text-white w-10 h-10 rounded-full shadow-lg border border-slate-600 flex items-center justify-center">
+            <i id="refresh-icon" class="fa-solid fa-arrow-rotate-right text-accent"></i>
+        </div>
     </div>
-</div>
     
     <section id="view-login" class="view-section">
         <div class="flex flex-col items-center justify-center h-screen px-6">
@@ -453,11 +442,16 @@
                     <div class="min-w-0"><label class="text-xs text-textSub block mb-1">持續 (分鐘)</label><input type="number" id="edit-duration" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
                 </div>
                 <div><label class="text-xs text-textSub block mb-1">備註</label><textarea id="edit-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></textarea></div>
-                <div><label class="text-xs text-textSub block mb-1">Google Maps</label><input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
-                <div><label class="text-xs text-textSub block mb-2">相關連結 / 票券</label><div id="edit-event-links-container" class="space-y-2 mb-2"></div><button onclick="addEventLinkInput()" class="text-xs text-accent border border-accent/50 px-3 py-1.5 rounded-lg hover:bg-accent/10 transition flex items-center gap-1">
-        <i class="fa-solid fa-plus"></i> 新增連結
-    </button>
-</div>
+                <div><label class="text-xs text-textSub block mb-1">Google Maps (導航)</label><input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="輸入地點或貼上連結"></div>
+                
+                <div>
+                    <label class="text-xs text-textSub block mb-2">相關連結 / 票券</label>
+                    <div id="edit-event-links-container" class="space-y-2 mb-2"></div>
+                    <button onclick="addEventLinkInput()" class="text-xs text-accent border border-accent/50 px-3 py-1.5 rounded-lg hover:bg-accent/10 transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> 新增連結
+                    </button>
+                </div>
+
                 <div class="flex items-center gap-2 pt-2"><input type="checkbox" id="edit-important" class="w-5 h-5 rounded bg-dark border-slate-600 text-accent"><label for="edit-important" class="text-sm text-white">標記為重要行程</label></div>
             </div>
             <div class="px-6 py-4 border-t border-white/10 flex-none flex gap-3 bg-card/50 backdrop-blur-md rounded-b-2xl">
@@ -659,16 +653,11 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const el = document.createElement('div');
-                // 移除這裡的相對定位與 hover 效果，保持簡潔
                 el.className = 'bg-card rounded-xl p-5 border border-slate-700 cursor-pointer hover:bg-slate-800 transition relative group active:scale-[0.98]';
                 el.onclick = () => selectTrip(doc.id, data);
                 
                 let actionsBtn = '';
                 if (isOwner) {
-                    // 修改重點：
-                    // 1. 移除原本的 border-t 和 mt-4
-                    // 2. 加入 ml-2 與 flex-shrink-0 確保按鈕不會被壓縮
-                    // 3. 改用 Icon 按鈕 (w-8 h-8 rounded-full) 節省空間
                     actionsBtn = `
                     <div class="flex gap-2 flex-shrink-0 ml-3">
                         <button onclick="event.stopPropagation(); openEditTripInfo('${doc.id}', '${escapeHtml(data.title)}', '${escapeHtml(data.description)}')" class="w-8 h-8 rounded-full bg-slate-700 text-slate-300 hover:text-white hover:bg-slate-600 transition flex items-center justify-center border border-slate-600">
@@ -684,9 +673,6 @@
                 if(data.isPublic) badge += `<span class="absolute top-4 right-4 text-[10px] bg-blue-900/50 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded">公開</span>`;
                 if(!isOwner && !isGuestView) badge += `<span class="absolute top-4 right-4 text-[10px] bg-purple-900/50 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">協作</span>`;
 
-                // 修改重點 HTML 結構：
-                // 使用 <div class="flex justify-between items-end mt-2"> 包覆描述與按鈕
-                // 描述加上 flex-1 佔滿剩餘空間
                 el.innerHTML = `
                     <div class="flex justify-between items-start mr-10">
                         <h3 class="text-lg font-bold text-white leading-tight">${data.title || '未命名'}</h3>
@@ -778,8 +764,11 @@
         // --- MAIN APP ---
         function getTripRef() { return db.collection('trips').doc(CURRENT_TRIP_ID); }
         
-        async function initMainApp() {
-            document.getElementById('loading-overlay').style.display = 'flex';
+        // 修改：加入 isRefresh 參數避免下拉時跳全螢幕遮罩
+        async function initMainApp(isRefresh = false) {
+            if (!isRefresh) {
+                document.getElementById('loading-overlay').style.display = 'flex';
+            }
             try {
                 const tripDoc = await getTripRef().get();
                 if(!tripDoc.exists) throw new Error("Trip not found");
@@ -794,7 +783,7 @@
                 flightData = []; flightSnap.forEach(doc => flightData.push({...doc.data(), docId: doc.id}));
                 parkData = []; parkSnap.forEach(doc => parkData.push({...doc.data(), docId: doc.id}));
                 highlightData = []; highSnap.forEach(doc => highlightData.push({...doc.data(), docId: doc.id}));
-                setInitialDate(); renderHeaderInfo(); switchTab('plan');
+                setInitialDate(); renderHeaderInfo(); switchTab(activeTab); // Reload current tab
             } catch(e) { console.error(e); alert("載入失敗"); backToDashboard(); }
             finally { document.getElementById('loading-overlay').style.display = 'none'; }
         }
@@ -888,48 +877,34 @@
 
         // Auto Scroll to Date Button if cutoff
         function changeDate(date) {
-            // 1. [關鍵] 重繪前，先記錄舊的 Scroll 位置
-            // 因為 renderPlan 會整個清空 HTML 重畫，導致捲軸自動跳回最左邊
             const oldBar = document.querySelector('.date-sticky-bar');
             const oldScrollLeft = oldBar ? oldBar.scrollLeft : 0;
 
             activeDate = date; 
             renderHeaderInfo(); 
             
-            // 2. 重繪畫面 (這時候 DOM 被更新了)
             renderPlan(document.getElementById('app'));
 
-            // 3. 取得新的 Bar 與該日期的按鈕
             const newBar = document.querySelector('.date-sticky-bar');
-            // 注意：這裡必須重新抓取按鈕，因為它是新生成的 DOM 元素
             const btn = newBar ? newBar.querySelector(`button[onclick="changeDate('${date}')"]`) : null;
 
             if(newBar && btn) {
-                // 4. [關鍵] 先「瞬間」恢復原本的捲軸位置
-                // 這樣如果按鈕原本就在畫面中間，使用者會感覺完全沒動
                 newBar.scrollLeft = oldScrollLeft;
-
-                // 5. 接著才計算「是否被遮擋」，需要時才滑動
                 const btnLeft = btn.offsetLeft;
                 const btnRight = btnLeft + btn.offsetWidth;
                 
                 const containerWidth = newBar.clientWidth;
-                // 注意：這裡要用恢復後的 scrollLeft 來計算可視範圍
                 const currentScroll = newBar.scrollLeft; 
                 const visibleRight = currentScroll + containerWidth;
 
-                const padding = 20; // 稍微多滑一點點，留個邊距
+                const padding = 20; 
 
-                // 情況 2-A: 按鈕左邊被遮住 (在可視範圍左側之外)
                 if (btnLeft < currentScroll) {
                     newBar.scrollTo({ left: btnLeft - padding, behavior: 'smooth' });
                 } 
-                // 情況 2-B: 按鈕右邊被遮住 (在可視範圍右側之外)
                 else if (btnRight > visibleRight) {
                     newBar.scrollTo({ left: btnRight - containerWidth + padding, behavior: 'smooth' });
                 }
-                // 情況 1: 按鈕已經在可視範圍內 (btnLeft >= currentScroll && btnRight <= visibleRight)
-                // 什麼都不做，因為步驟 4 已經恢復了原本的位置，看起來就是靜止的
             }
         }
 
@@ -946,96 +921,83 @@
             if(events.length === 0) { html += `<div class="flex flex-col items-center justify-center mt-20 text-slate-600 space-y-4"><i class="fa-regular fa-calendar-xmark text-4xl"></i><p>本日尚無行程</p></div>`; }
             else {
                 events.forEach(item => {
-    const isImp = item.isImportant;
-    const typeConfig = iconTypes[item.type] || iconTypes.star;
-    const end = calculateEndTime(item.time, item.duration);
-    const timeDisp = end ? `${item.time} - ${end}` : item.time;
-    const durDisp = item.duration ? `<span class="opacity-60 ml-1">(${item.duration}m)</span>` : '';
-    const clickAttr = IS_READ_ONLY ? '' : `onclick="openEditModal(${item.id})"`;
-    const deleteAttr = IS_READ_ONLY ? '' : `onclick="deleteEventDirect(${item.id})"`;
+                    const isImp = item.isImportant;
+                    const typeConfig = iconTypes[item.type] || iconTypes.star;
+                    const end = calculateEndTime(item.time, item.duration);
+                    const timeDisp = end ? `${item.time} - ${end}` : item.time;
+                    const durDisp = item.duration ? `<span class="opacity-60 ml-1">(${item.duration}m)</span>` : '';
+                    const clickAttr = IS_READ_ONLY ? '' : `onclick="openEditModal(${item.id})"`;
+                    const deleteAttr = IS_READ_ONLY ? '' : `onclick="deleteEventDirect(${item.id})"`;
 
-    // --- 按鈕排版邏輯開始 ---
-    let buttonsHtml = '';
-    // 1. 收集所有動作 (導航 + 連結)
-    const actions = [];
-    
-    // 如果有導航 (Location)
-    if (item.location) {
-        const navUrl = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(item.location)}`;
-        actions.push({
-            type: 'nav',
-            title: '導航',
-            url: navUrl,
-            icon: 'fa-solid fa-location-arrow',
-            colorClass: 'bg-slate-700/50 hover:bg-slate-700 text-white'
-        });
-    }
+                    // --- 按鈕排版邏輯開始 ---
+                    let buttonsHtml = '';
+                    const actions = [];
+                    
+                    if (item.location) {
+                        const navUrl = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(item.location)}`;
+                        actions.push({
+                            type: 'nav',
+                            title: '導航',
+                            url: navUrl,
+                            icon: 'fa-solid fa-location-arrow',
+                            colorClass: 'bg-slate-700/50 hover:bg-slate-700 text-white'
+                        });
+                    }
 
-    // 如果有連結 (Links)
-    if (item.links && item.links.length > 0) {
-        item.links.forEach(link => {
-            actions.push({
-                type: 'link',
-                title: link.title,
-                url: link.url,
-                icon: 'fa-solid fa-ticket',
-                colorClass: 'bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30'
-            });
-        });
-    }
+                    if (item.links && item.links.length > 0) {
+                        item.links.forEach(link => {
+                            actions.push({
+                                type: 'link',
+                                title: link.title,
+                                url: link.url,
+                                icon: 'fa-solid fa-ticket',
+                                colorClass: 'bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30'
+                            });
+                        });
+                    }
 
-    // 2. 根據數量生成 HTML
-    if (actions.length > 0) {
-        // 使用 grid 佈局，預設 2 列
-        buttonsHtml = `<div class="mt-auto pt-3 grid grid-cols-2 gap-2" onclick="event.stopPropagation()">`;
-        
-        actions.forEach((act, index) => {
-            let spanClass = 'col-span-1';
-            
-            // 邏輯：如果總數是奇數，且這是第一個按鈕 -> 佔滿 2 格 (最大顆)
-            if (actions.length % 2 !== 0 && index === 0) {
-                spanClass = 'col-span-2';
-            }
+                    if (actions.length > 0) {
+                        buttonsHtml = `<div class="mt-auto pt-3 grid grid-cols-2 gap-2" onclick="event.stopPropagation()">`;
+                        actions.forEach((act, index) => {
+                            let spanClass = 'col-span-1';
+                            // 奇數且為第一個，佔滿
+                            if (actions.length % 2 !== 0 && index === 0) {
+                                spanClass = 'col-span-2';
+                            }
+                            // 使用 openExternal 並處理單引號
+                            buttonsHtml += `
+                            <button onclick="openExternal('${act.url.replace(/'/g, "\\'")}')"
+                                class="${spanClass} ${act.colorClass} border border-slate-600/50 rounded-lg py-2.5 text-center text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
+                                <i class="${act.icon}"></i> ${act.title}
+                            </button>
+                            `;
+                        });
+                        buttonsHtml += `</div>`;
+                    }
+                    // --- 按鈕排版邏輯結束 ---
 
-            // 注意：這裡改成了 <button>，並使用 openExternal
-// 同時加入 replace(/'/g, "\\'") 避免網址內有單引號導致報錯
-buttonsHtml += `
-    <button onclick="openExternal('${act.url.replace(/'/g, "\\'")}')"
-        class="${spanClass} ${act.colorClass} border border-slate-600/50 rounded-lg py-2.5 text-center text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
-        <i class="${act.icon}"></i> ${act.title}
-    </button>
-`;
-        });
-        
-        buttonsHtml += `</div>`;
-    }
-    // --- 按鈕排版邏輯結束 ---
-
-    // Swipe Structure (整合上述 buttonsHtml)
-    html += `
-        <div class="flex gap-2 mb-4 group">
-            <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
-                <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
-                <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
-                <div class="timeline-line"></div>
-            </div>
-            <div class="flex-1 min-w-0">
-                <div class="swipe-card-wrapper">
-                    <div class="swipe-actions">
-                        <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
-                    </div>
-                    <div class="swipe-content trip-card ${isImp ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between" ${clickAttr}>
-                        <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}</div>
-                        <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisp}</span>${durDisp}</div>
-                        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-1 line-clamp-10">${item.desc || ''}</p>
-                        
-                        ${buttonsHtml}
-
-                    </div>
-                </div>
-            </div>
-        </div>`;
-});
+                    html += `
+                        <div class="flex gap-2 mb-4 group">
+                            <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
+                                <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
+                                <div class="timeline-line"></div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="swipe-card-wrapper">
+                                    <div class="swipe-actions">
+                                        <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
+                                    </div>
+                                    <div class="swipe-content trip-card ${isImp ? 'important' : 'normal'} p-4 h-full flex flex-col justify-between" ${clickAttr}>
+                                        <div class="flex justify-between items-start mb-2"><h3 class="font-bold text-lg leading-tight text-white pr-2">${item.title}</h3>${isImp ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}</div>
+                                        <div class="text-xs text-textSub mb-3 flex items-center gap-1"><i class="fa-regular fa-clock"></i> <span class="font-mono">${timeDisp}</span>${durDisp}</div>
+                                        <p class="text-sm text-slate-300 whitespace-pre-line leading-relaxed mb-1 line-clamp-10">${item.desc || ''}</p>
+                                        ${buttonsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
             }
             html += `</div>`;
             container.innerHTML = html;
@@ -1052,8 +1014,7 @@ buttonsHtml += `
                 el.addEventListener('touchstart', (e) => {
                     startX = e.touches[0].clientX;
                     startY = e.touches[0].clientY;
-                    el.style.transition = 'none'; // Remove transition for instant drag
-                    // Close other open cards
+                    el.style.transition = 'none'; 
                     document.querySelectorAll('.swipe-content').forEach(other => {
                         if(other !== el) {
                             other.style.transition = 'transform 0.2s ease-out';
@@ -1069,14 +1030,12 @@ buttonsHtml += `
                     const diffX = touchX - startX;
                     const diffY = touchY - startY;
 
-                    // Determine if scrolling vertically
                     if (Math.abs(diffX) < Math.abs(diffY)) {
                         isScrolling = true;
                         return; 
                     }
                     
-                    if (diffX < 0) { // Swiping Left
-                        // Limit swipe distance
+                    if (diffX < 0) { 
                         const translate = Math.max(diffX, -100); 
                         el.style.transform = `translateX(${translate}px)`;
                     }
@@ -1085,7 +1044,6 @@ buttonsHtml += `
                 el.addEventListener('touchend', (e) => {
                     el.style.transition = 'transform 0.2s ease-out';
                     const diffX = e.changedTouches[0].clientX - startX;
-                    // If swiped left more than 50px, snap open
                     if (diffX < -50) {
                         el.style.transform = 'translateX(-80px)';
                     } else {
@@ -1103,12 +1061,11 @@ buttonsHtml += `
                  renderPlan(document.getElementById('app'));
                  await getTripRef().collection('itinerary').doc(activeDate).set({events: tripData[activeDate]});
              } else {
-                 renderPlan(document.getElementById('app')); // Reset swipe position
+                 renderPlan(document.getElementById('app')); 
              }
         }
 
         function renderGuide(container) {
-            // 1. 定義置頂的頁籤導覽列 (使用 sticky 定位，top 計算避開 header)
             let html = `
             <div class="sticky z-30 bg-slate-900/95 backdrop-blur border-b border-white/5 py-3 px-4 flex justify-center gap-3 overflow-x-auto no-scrollbar mb-6 -mx-4" style="top: calc(60px + env(safe-area-inset-top));">
                 <button onclick="scrollToGuideSection('guide-flight')" class="flex-shrink-0 px-4 py-1.5 rounded-full bg-slate-800 border border-slate-600 text-xs text-slate-300 hover:bg-slate-700 hover:text-white transition flex items-center gap-2">
@@ -1121,204 +1078,192 @@ buttonsHtml += `
                     <i class="fa-solid fa-star text-blue-400"></i> 重點
                 </button>
             </div>
-    <div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]">`;
+            <div class="space-y-6 pb-24 animate-[fadeIn_0.3s_ease-out]">`;
 
-    // --- 航班區塊 (加入 id="guide-flight") ---
-    html += `<div id="guide-flight" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 scroll-mt-32">
-                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3>
-                <button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
-             </div>`;
-    
-    if (flightData.length === 0) {
-        html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無航班資訊</div>`;
-    } else {
-        flightData.forEach(f => {
-            html += `<div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative mb-4">
-                        <div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center">
-                            <h2 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}</h2>
-                            <div class="flex items-center gap-3">
-                                <span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">${f.date || ''}</span>
-                                <button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors edit-trigger"><i class="fa-solid fa-pen text-[10px]"></i></button>
-                            </div>
-                        </div>
-                        <div class="p-4 space-y-4 text-sm relative">
-                            <div class="flex justify-between items-center">
-                                <div><div class="font-bold text-xl font-mono">${f.depTime}</div><div class="text-slate-400 text-xs">${f.depPort}</div></div>
-                                <div class="text-slate-500 flex flex-col items-center"><i class="fa-solid fa-arrow-right-long"></i><span class="text-[10px] mt-1 text-slate-600">${f.code}</span></div>
-                                <div class="text-right"><div class="font-bold text-xl font-mono">${f.arrTime}</div><div class="text-slate-400 text-xs">${f.arrPort}</div></div>
-                            </div>
-                            <div class="flex justify-between items-center pt-2 border-t border-slate-700/50">
-                                <div class="text-xs text-slate-500">訂位代號: <span class="font-mono text-accent font-bold">${f.pnr || '-'}</span></div>
-                                ${f.link ? `<a href="${f.link}" target="_blank" class="text-xs bg-accent/10 text-accent px-2 py-1 rounded font-bold">線上報到</a>` : ''}
-                            </div>
-                        </div>
-                    </div>`;
-        });
-    }
+            html += `<div id="guide-flight" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 scroll-mt-32">
+                        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-paper-plane mr-2 text-accent"></i>航班資訊</h3>
+                        <button onclick="openFlightModal(null)" class="text-xs bg-accent text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                     </div>`;
+            
+            if (flightData.length === 0) {
+                html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無航班資訊</div>`;
+            } else {
+                flightData.forEach(f => {
+                    html += `<div class="bg-card rounded-xl border border-slate-700 overflow-hidden relative mb-4">
+                                <div class="bg-slate-800 p-3 border-b border-slate-700 flex justify-between items-center">
+                                    <h2 class="font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane-up text-accent"></i> ${f.airline || 'Airline'}</h2>
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-xs bg-slate-700 border border-slate-600 px-2 py-1 rounded font-mono text-slate-300">${f.date || ''}</span>
+                                        <button onclick="openFlightModal('${f.docId}')" class="w-6 h-6 rounded-full bg-slate-700 text-slate-400 hover:text-white hover:bg-slate-600 flex items-center justify-center transition-colors edit-trigger"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                                    </div>
+                                </div>
+                                <div class="p-4 space-y-4 text-sm relative">
+                                    <div class="flex justify-between items-center">
+                                        <div><div class="font-bold text-xl font-mono">${f.depTime}</div><div class="text-slate-400 text-xs">${f.depPort}</div></div>
+                                        <div class="text-slate-500 flex flex-col items-center"><i class="fa-solid fa-arrow-right-long"></i><span class="text-[10px] mt-1 text-slate-600">${f.code}</span></div>
+                                        <div class="text-right"><div class="font-bold text-xl font-mono">${f.arrTime}</div><div class="text-slate-400 text-xs">${f.arrPort}</div></div>
+                                    </div>
+                                    <div class="flex justify-between items-center pt-2 border-t border-slate-700/50">
+                                        <div class="text-xs text-slate-500">訂位代號: <span class="font-mono text-accent font-bold">${f.pnr || '-'}</span></div>
+                                        ${f.link ? `<button onclick="openExternal('${f.link}')" class="text-xs bg-accent/10 text-accent px-2 py-1 rounded font-bold">線上報到</button>` : ''}
+                                    </div>
+                                </div>
+                            </div>`;
+                });
+            }
 
-    // --- 票券區塊 (加入 id="guide-ticket") ---
-    html += `<div id="guide-ticket" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8 scroll-mt-32">
-                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket mr-2 text-subAccent"></i>票券資訊</h3>
-                <button onclick="openParkModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
-             </div>`;
+            html += `<div id="guide-ticket" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8 scroll-mt-32">
+                        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket mr-2 text-subAccent"></i>票券資訊</h3>
+                        <button onclick="openParkModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                     </div>`;
 
-    if (parkData.length === 0) {
-        html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無票券資訊</div>`;
-    } else {
-        parkData.forEach(p => {
-            html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group">
-                        <button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>
-                        ${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}
-                        ${p.links && p.links.length > 0 ? 
-    `<div class="grid grid-cols-2 gap-2 mb-4">
-        ${p.links.map(l => `
-            <button onclick="openExternal('${l.url}')" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1 w-full">
-                <i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}
-            </button>
-        `).join('')}
-    </div>` 
-: ''}
-                        ${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}
-                    </div>`;
-        });
-    }
+            if (parkData.length === 0) {
+                html += `<div class="text-center text-slate-500 py-4 border border-slate-700 rounded-xl bg-card border-dashed mb-4">尚無票券資訊</div>`;
+            } else {
+                parkData.forEach(p => {
+                    html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative group">
+                                <button onclick="openParkModal('${p.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center z-10 edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <h2 class="font-bold text-white mb-3 text-lg">${p.title}</h2>
+                                ${p.map ? `<div class="rounded-lg overflow-hidden mb-3 aspect-video bg-slate-800"><iframe src="${p.map}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy"></iframe></div>` : ''}
+                                ${p.links && p.links.length > 0 ? 
+                                    `<div class="grid grid-cols-2 gap-2 mb-4">
+                                        ${p.links.map(l => `
+                                            <button onclick="openExternal('${l.url.replace(/'/g, "\\'")}')" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-center text-xs font-bold flex flex-col items-center gap-1 w-full">
+                                                <i class="${l.icon || 'fa-solid fa-ticket'} text-lg text-subAccent"></i> ${l.title}
+                                            </button>
+                                        `).join('')}
+                                    </div>` 
+                                : ''}
+                                ${p.desc ? `<ul class="text-sm text-slate-300 list-disc list-inside space-y-1 bg-slate-800/50 p-3 rounded-lg">${p.desc.split('\n').map(line => `<li>${line}</li>`).join('')}</ul>` : ''}
+                            </div>`;
+                });
+            }
 
-    // --- 重點區塊 (加入 id="guide-highlight") ---
-    html += `<div id="guide-highlight" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8 scroll-mt-32">
-                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star mr-2 text-blue-400"></i>行程重點</h3>
-                <button onclick="openHighlightModal(null)" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
-             </div>`;
+            html += `<div id="guide-highlight" class="flex justify-between items-center px-1 border-b border-slate-700 pb-2 mt-8 scroll-mt-32">
+                        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star mr-2 text-blue-400"></i>行程重點</h3>
+                        <button onclick="openHighlightModal(null)" class="text-xs bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold hover:bg-opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                     </div>`;
 
-    if (highlightData.length === 0) {
-        html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl">尚無重點資訊</div>`;
-    } else {
-        highlightData.forEach(h => {
-            html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative">
-                        <button onclick="openHighlightModal('${h.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
-                        <h2 class="font-bold text-white mb-4 text-lg border-l-4 border-blue-500 pl-3">${h.title}</h2>
-                        <div class="space-y-4 pl-1">
-                            ${h.items ? h.items.map((item, idx) => `<div class="flex gap-3 items-start group"><span class="bg-blue-900 text-blue-200 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${idx + 1}</span><div><div class="font-bold text-sm text-blue-200">${item.subtitle}</div><div class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</div></div></div>`).join('') : ''}
-                        </div>
-                    </div>`;
-        });
-    }
+            if (highlightData.length === 0) {
+                html += `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl">尚無重點資訊</div>`;
+            } else {
+                highlightData.forEach(h => {
+                    html += `<div class="bg-card rounded-xl border border-slate-700 p-4 mb-4 relative">
+                                <button onclick="openHighlightModal('${h.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <h2 class="font-bold text-white mb-4 text-lg border-l-4 border-blue-500 pl-3">${h.title}</h2>
+                                <div class="space-y-4 pl-1">
+                                    ${h.items ? h.items.map((item, idx) => `<div class="flex gap-3 items-start group"><span class="bg-blue-900 text-blue-200 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">${idx + 1}</span><div><div class="font-bold text-sm text-blue-200">${item.subtitle}</div><div class="text-xs text-slate-400 mt-0.5 leading-relaxed">${item.desc}</div></div></div>`).join('') : ''}
+                                </div>
+                            </div>`;
+                });
+            }
 
-    html += `</div>`;
-    container.innerHTML = html;
-}
-        // --- 新增：導覽頁面滑動定位函式 ---
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
         function scrollToGuideSection(id) {
             const element = document.getElementById(id);
             if (!element) return;
-    
-            // 計算偏移量：Header 高度 (約70px) + 頁籤高度 (約50px) + 一點緩衝
-            // 這裡設定 130px 可以讓標題停在視線舒適的位置
             const headerOffset = 130; 
             const elementPosition = element.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-            });
+            window.scrollTo({ top: offsetPosition, behavior: "smooth" });
         }
 
         function renderInfo(container) {
-    let accHtml = '';
-    if (accommodationData.length === 0) 
-        accHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無住宿資訊</div>`;
-    else 
-        accommodationData.forEach(acc => {
-            const mapLink = acc.address ? `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(acc.address)}` : '#';
-            // 注意：這裡我順便加上了上一題教的 window.open 讓地圖連結也能跳轉 Safari
-            accHtml += `<div class="bg-card rounded-xl p-6 text-center border border-slate-700 relative group mb-4">
-                <button onclick="openInfoModal('${acc.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
-                <h2 class="text-xl font-bold text-white mb-1">${acc.title}</h2>
-                <p class="text-sm text-slate-400 mb-4">${acc.subtitle || ''}</p>
-                <div class="text-xs text-slate-500 mb-4 whitespace-pre-line">${acc.address || '無地址資訊'}</div>
-                <a href="javascript:void(0)" onclick="window.open('${mapLink}', '_blank'); return false;" class="inline-block bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-slate-600"><i class="fa-solid fa-location-arrow mr-1"></i> 導航至飯店</a>
-            </div>`;
-        });
+            let accHtml = '';
+            if (accommodationData.length === 0) 
+                accHtml = `<div class="text-center text-slate-500 py-4 border border-slate-700 border-dashed rounded-xl mb-4">尚無住宿資訊</div>`;
+            else 
+                accommodationData.forEach(acc => {
+                    const mapLink = acc.address ? `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(acc.address)}` : '#';
+                    accHtml += `<div class="bg-card rounded-xl p-6 text-center border border-slate-700 relative group mb-4">
+                        <button onclick="openInfoModal('${acc.docId}')" class="absolute top-2 right-2 w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center edit-trigger"><i class="fa-solid fa-pen text-xs"></i></button>
+                        <h2 class="text-xl font-bold text-white mb-1">${acc.title}</h2>
+                        <p class="text-sm text-slate-400 mb-4">${acc.subtitle || ''}</p>
+                        <div class="text-xs text-slate-500 mb-4 whitespace-pre-line">${acc.address || '無地址資訊'}</div>
+                        <button onclick="openExternal('${mapLink.replace(/'/g, "\\'")}')" class="inline-block bg-slate-700 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-slate-600"><i class="fa-solid fa-location-arrow mr-1"></i> 導航至飯店</button>
+                    </div>`;
+                });
 
-    container.innerHTML = `
-    <div class="space-y-4 pb-24 animate-[fadeIn_0.3s_ease-out]">
-        <div class="flex justify-between items-center px-1">
-            <h3 class="text-sm font-bold text-slate-300">住宿資訊</h3>
-            <button onclick="openInfoModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1 rounded-lg font-bold hover:opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
-        </div>
-        
-        ${accHtml}
-        
-        <div class="grid grid-cols-2 gap-4">
-            <a href="javascript:void(0)" onclick="window.open('https://www.jma.go.jp/bosai/forecast/', '_blank')" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2">
-                <i class="fa-solid fa-cloud-sun-rain text-2xl text-blue-400"></i><span class="text-sm font-bold">天氣預報</span>
-            </a>
-            <a href="javascript:void(0)" onclick="window.open('https://goo.gl/maps/osaka', '_blank')" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2">
-                <i class="fa-solid fa-map-location-dot text-2xl text-green-400"></i><span class="text-sm font-bold">Google Maps</span>
-            </a>
-        </div>
-        
-        <div class="mt-8 pt-6 border-t border-slate-700 edit-trigger">
-            <h3 class="text-sm font-bold text-slate-400 mb-4 px-2">資料庫管理</h3>
-            <button onclick="openJsonModal()" class="w-full py-3 rounded-xl bg-slate-800 border border-slate-600 text-accent font-bold mb-3 flex items-center justify-center gap-2 hover:bg-slate-700">
-                <i class="fa-solid fa-file-import"></i> 貼上 JSON 匯入行程
-            </button>
-        </div>
-        
-        <div class="text-center mt-10 mb-6 opacity-40 hover:opacity-80 transition-opacity select-none">
-            <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.2</p>
-            <p class="text-[10px] text-slate-500 font-display font-bold mt-1">
-                Powered by <span class="text-accent">Hioklu</span>
-            </p>
-        </div>
-    </div>`;
-}
-        // --- 版號資訊 ---
+            container.innerHTML = `
+            <div class="space-y-4 pb-24 animate-[fadeIn_0.3s_ease-out]">
+                <div class="flex justify-between items-center px-1">
+                    <h3 class="text-sm font-bold text-slate-300">住宿資訊</h3>
+                    <button onclick="openInfoModal(null)" class="text-xs bg-subAccent text-dark px-3 py-1 rounded-lg font-bold hover:opacity-90 edit-trigger"><i class="fa-solid fa-plus mr-1"></i> 新增</button>
+                </div>
+                
+                ${accHtml}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="openExternal('https://www.jma.go.jp/bosai/forecast/')" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2">
+                        <i class="fa-solid fa-cloud-sun-rain text-2xl text-blue-400"></i><span class="text-sm font-bold">天氣預報</span>
+                    </button>
+                    <button onclick="openExternal('https://goo.gl/maps/osaka')" class="bg-card p-4 rounded-xl border border-slate-700 flex flex-col items-center justify-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-2xl text-green-400"></i><span class="text-sm font-bold">Google Maps</span>
+                    </button>
+                </div>
+                
+                <div class="mt-8 pt-6 border-t border-slate-700 edit-trigger">
+                    <h3 class="text-sm font-bold text-slate-400 mb-4 px-2">資料庫管理</h3>
+                    <button onclick="openJsonModal()" class="w-full py-3 rounded-xl bg-slate-800 border border-slate-600 text-accent font-bold mb-3 flex items-center justify-center gap-2 hover:bg-slate-700">
+                        <i class="fa-solid fa-file-import"></i> 貼上 JSON 匯入行程
+                    </button>
+                </div>
+
+                <div class="text-center mt-10 mb-6 opacity-40 hover:opacity-80 transition-opacity select-none">
+                    <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.0</p>
+                    <p class="text-[10px] text-slate-500 font-display font-bold mt-1">
+                        Powered by <span class="text-accent">Hioklu</span>
+                    </p>
+                </div>
+            </div>`;
+        }
+        //版號資訊
         // --- CRUD / Logic ---
         function openDateSettings(m) { const mod=document.getElementById('date-settings-modal'); document.getElementById('date-modal-mode').value=m; const inp=document.getElementById('settings-day-date'); const del=document.getElementById('btn-delete-day'); if(m==='add'){ document.getElementById('date-modal-title').innerText='新增日期'; inp.value=''; del.classList.add('hidden'); }else{ document.getElementById('date-modal-title').innerText='編輯日期'; inp.value=activeDate; del.classList.remove('hidden'); } mod.classList.remove('hidden'); }
         async function saveEvent() {
-    if (IS_READ_ONLY) return;
-    const idInput = document.getElementById('edit-id').value;
-    const title = document.getElementById('edit-title').value;
-    const time = document.getElementById('edit-time').value;
+            if (IS_READ_ONLY) return;
+            const idInput = document.getElementById('edit-id').value;
+            const title = document.getElementById('edit-title').value;
+            const time = document.getElementById('edit-time').value;
 
-    if (!title || !time) return alert("請填寫標題與時間");
+            if (!title || !time) return alert("請填寫標題與時間");
 
-    // --- 新增邏輯：收集連結資料 ---
-    const links = [];
-    document.querySelectorAll('#edit-event-links-container > div').forEach(div => {
-        const t = div.querySelector('.link-title').value.trim();
-        const u = div.querySelector('.link-url').value.trim();
-        if (u) { // 只要有網址就儲存，標題沒填給預設值
-            links.push({ title: t || '連結', url: u });
+            // --- 新增邏輯：收集連結資料 ---
+            const links = [];
+            document.querySelectorAll('#edit-event-links-container > div').forEach(div => {
+                const t = div.querySelector('.link-title').value.trim();
+                const u = div.querySelector('.link-url').value.trim();
+                if (u) { // 只要有網址就儲存
+                    links.push({ title: t || '連結', url: u });
+                }
+            });
+
+            const ev = {
+                id: idInput ? parseInt(idInput) : Date.now(),
+                title,
+                time,
+                duration: document.getElementById('edit-duration').value,
+                desc: document.getElementById('edit-desc').value,
+                location: document.getElementById('edit-location').value,
+                type: document.getElementById('edit-type').value,
+                isImportant: document.getElementById('edit-important').checked,
+                links: links // 儲存連結
+            };
+
+            let evs = tripData[activeDate] || [];
+            if (idInput) {
+                const idx = evs.findIndex(e => e.id === parseInt(idInput));
+                if (idx !== -1) evs[idx] = ev;
+            } else evs.push(ev);
+
+            tripData[activeDate] = evs;
+            closeEditModal();
+            renderPlan(document.getElementById('app'));
+            await getTripRef().collection('itinerary').doc(activeDate).set({ events: evs });
         }
-    });
-    // ---------------------------
-
-    const ev = {
-        id: idInput ? parseInt(idInput) : Date.now(),
-        title,
-        time,
-        duration: document.getElementById('edit-duration').value,
-        desc: document.getElementById('edit-desc').value,
-        location: document.getElementById('edit-location').value,
-        type: document.getElementById('edit-type').value,
-        isImportant: document.getElementById('edit-important').checked,
-        links: links // 儲存連結
-    };
-
-    let evs = tripData[activeDate] || [];
-    if (idInput) {
-        const idx = evs.findIndex(e => e.id === parseInt(idInput));
-        if (idx !== -1) evs[idx] = ev;
-    } else evs.push(ev);
-
-    tripData[activeDate] = evs;
-    closeEditModal();
-    renderPlan(document.getElementById('app'));
-    await getTripRef().collection('itinerary').doc(activeDate).set({ events: evs });
-}
         async function deleteEvent() { if(IS_READ_ONLY) return; if(confirm("刪除?")) { const id=parseInt(document.getElementById('edit-id').value); tripData[activeDate]=tripData[activeDate].filter(e=>e.id!==id); closeEditModal(); renderPlan(document.getElementById('app')); await getTripRef().collection('itinerary').doc(activeDate).set({events: tripData[activeDate]}); } }
         async function confirmDateSettings() { if(IS_READ_ONLY) return; const mode=document.getElementById('date-modal-mode').value; const newD=document.getElementById('settings-day-date').value; if(!newD)return; if(mode==='add'){ if(tripData[newD]) return alert("日期已存在"); tripData[newD]=[]; activeDate=newD; await getTripRef().collection('itinerary').doc(newD).set({events: []}); } else { if(newD!==activeDate) { if(tripData[newD] && !confirm("覆蓋?")) return; tripData[newD]=tripData[activeDate]; await getTripRef().collection('itinerary').doc(newD).set({events: tripData[newD]}); await getTripRef().collection('itinerary').doc(activeDate).delete(); delete tripData[activeDate]; activeDate=newD; } } document.getElementById('date-settings-modal').classList.add('hidden'); setInitialDate(); renderHeaderInfo(); renderPlan(document.getElementById('app')); }
         async function deleteCurrentDay() { if(IS_READ_ONLY) return; if(confirm("刪除整天?")) { const d=activeDate; delete tripData[d]; await getTripRef().collection('itinerary').doc(d).delete(); document.getElementById('date-settings-modal').classList.add('hidden'); setInitialDate(); renderHeaderInfo(); renderPlan(document.getElementById('app')); } }
@@ -1341,214 +1286,162 @@ buttonsHtml += `
         async function deleteHighlight() { if(IS_READ_ONLY) return; if(confirm("刪除?")){ const id=document.getElementById('highlight-id').value; await getTripRef().collection('highlights').doc(id).delete(); highlightData=highlightData.filter(x=>x.docId!==id); document.getElementById('highlight-modal').classList.add('hidden'); renderGuide(document.getElementById('app')); } }
         async function confirmJsonImport() { if(IS_READ_ONLY) return; const str=document.getElementById('json-input').value; if(!str.trim())return; try { const data=JSON.parse(str); if(typeof data!=='object') throw new Error(); if(!confirm("覆蓋?"))return; document.getElementById('loading-overlay').style.display='flex'; const batch=db.batch(); const ref=getTripRef().collection('itinerary'); for(const [k,v] of Object.entries(data)) { if(!Array.isArray(v))continue; batch.set(ref.doc(k),{events:v}); } await batch.commit(); tripData=data; setInitialDate(); renderHeaderInfo(); document.getElementById('json-modal').classList.add('hidden'); switchTab('plan'); alert("成功"); } catch(e){ alert("錯誤"); } finally { document.getElementById('loading-overlay').style.display='none'; } }
         function openEditModal(id) {
-    if (IS_READ_ONLY) return;
-    
-    // 初始化 UI
-    const c = document.getElementById('icon-selector');
-    c.innerHTML = Object.entries(iconTypes).map(([k, v]) => `<div onclick="selectIcon('${k}')" class="icon-option flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer p-2 rounded-xl border border-transparent hover:bg-white/5 transition active:scale-95" data-type="${k}" style="min-width:60px;"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg shadow-md transition-colors"><i class="${v.icon}"></i></div><span class="text-[10px] text-slate-400 font-medium">${v.label}</span></div>`).join('');
-    
-    const m = document.getElementById('edit-modal');
-    const del = document.getElementById('btn-delete');
-    const tit = document.getElementById('modal-title');
-    
-    // 清空連結容器
-    document.getElementById('edit-event-links-container').innerHTML = '';
+            if (IS_READ_ONLY) return;
+            
+            const c = document.getElementById('icon-selector');
+            c.innerHTML = Object.entries(iconTypes).map(([k, v]) => `<div onclick="selectIcon('${k}')" class="icon-option flex-shrink-0 flex flex-col items-center gap-1 cursor-pointer p-2 rounded-xl border border-transparent hover:bg-white/5 transition active:scale-95" data-type="${k}" style="min-width:60px;"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg shadow-md transition-colors"><i class="${v.icon}"></i></div><span class="text-[10px] text-slate-400 font-medium">${v.label}</span></div>`).join('');
+            
+            const m = document.getElementById('edit-modal');
+            const del = document.getElementById('btn-delete');
+            const tit = document.getElementById('modal-title');
+            
+            document.getElementById('edit-event-links-container').innerHTML = '';
 
-    // 重置基本欄位
-    document.getElementById('edit-id').value = '';
-    document.getElementById('edit-title').value = '';
-    document.getElementById('edit-time').value = '09:00';
-    document.getElementById('edit-duration').value = '';
-    document.getElementById('edit-desc').value = '';
-    document.getElementById('edit-location').value = '';
-    document.getElementById('edit-important').checked = false;
-    selectIcon('transport');
+            document.getElementById('edit-id').value = '';
+            document.getElementById('edit-title').value = '';
+            document.getElementById('edit-time').value = '09:00';
+            document.getElementById('edit-duration').value = '';
+            document.getElementById('edit-desc').value = '';
+            document.getElementById('edit-location').value = '';
+            document.getElementById('edit-important').checked = false;
+            selectIcon('transport');
 
-    if (id) {
-        const it = tripData[activeDate].find(x => x.id === id);
-        if (!it) return;
-        tit.innerText = "編輯行程";
-        del.classList.remove('hidden');
-        
-        // 回填基本資料
-        document.getElementById('edit-id').value = it.id;
-        document.getElementById('edit-title').value = it.title;
-        document.getElementById('edit-time').value = it.time;
-        document.getElementById('edit-duration').value = it.duration || '';
-        document.getElementById('edit-desc').value = it.desc || '';
-        document.getElementById('edit-location').value = it.location || '';
-        document.getElementById('edit-important').checked = it.isImportant || false;
-        selectIcon(it.type || 'transport');
+            if (id) {
+                const it = tripData[activeDate].find(x => x.id === id);
+                if (!it) return;
+                tit.innerText = "編輯行程";
+                del.classList.remove('hidden');
+                
+                document.getElementById('edit-id').value = it.id;
+                document.getElementById('edit-title').value = it.title;
+                document.getElementById('edit-time').value = it.time;
+                document.getElementById('edit-duration').value = it.duration || '';
+                document.getElementById('edit-desc').value = it.desc || '';
+                document.getElementById('edit-location').value = it.location || '';
+                document.getElementById('edit-important').checked = it.isImportant || false;
+                selectIcon(it.type || 'transport');
 
-        // --- 回填連結資料 ---
-        if (it.links && Array.isArray(it.links)) {
-            it.links.forEach(l => addEventLinkInput(l.title, l.url));
+                if (it.links && Array.isArray(it.links)) {
+                    it.links.forEach(l => addEventLinkInput(l.title, l.url));
+                }
+            } else {
+                tit.innerText = "新增行程";
+                del.classList.add('hidden');
+            }
+
+            m.classList.remove('hidden');
+            const mc = m.querySelector('.glass-modal');
+            m.classList.remove('opacity-0');
+            mc.classList.remove('scale-95');
+            mc.classList.add('scale-100');
         }
-    } else {
-        tit.innerText = "新增行程";
-        del.classList.add('hidden');
-        // 如果是新增，預設給一個空的連結輸入框方便使用
-        // addEventLinkInput(); 
-    }
-
-    m.classList.remove('hidden');
-    const mc = m.querySelector('.glass-modal');
-    m.classList.remove('opacity-0');
-    mc.classList.remove('scale-95');
-    mc.classList.add('scale-100');
-}
         function closeEditModal() { const m=document.getElementById('edit-modal'); const c=m.querySelector('.glass-modal'); m.classList.add('opacity-0'); c.classList.remove('scale-100'); c.classList.add('scale-95'); setTimeout(()=>m.classList.add('hidden'),300); }
         function selectIcon(t) { document.getElementById('edit-type').value=t; document.querySelectorAll('.icon-option').forEach(el=>{ if(el.dataset.type===t) { el.classList.add('bg-accent/20', 'border-accent'); el.querySelector('div').classList.replace('bg-slate-700', 'bg-accent'); } else { el.classList.remove('bg-accent/20', 'border-accent'); el.querySelector('div').classList.replace('bg-accent', 'bg-slate-700'); } }); }
         function openJsonModal() { if(IS_READ_ONLY) return; document.getElementById('json-input').value=''; document.getElementById('json-modal').classList.remove('hidden'); }
         function fillTemplate() { document.getElementById('json-input').value=JSON.stringify({"2026-01-24":[{id:101,time:"09:00",duration:210,type:"flight",title:"範例",desc:"...",isImportant:true}]},null,4); }
-    
-    // --- 下拉刷新 (Pull to Refresh) 邏輯 ---
-
-let pStart = { x: 0, y: 0 };
-let pCurrent = { x: 0, y: 0 };
-let isDragging = false;
-let isRefreshing = false;
-
-const contentBody = document.body;
-const refreshIndicator = document.getElementById('pull-refresh-indicator');
-const refreshIcon = document.getElementById('refresh-icon');
-const MAX_Y = 180; // 最大下拉距離 (像素)
-const THRESHOLD = 80; // 觸發刷新的門檻
-
-contentBody.addEventListener('touchstart', (e) => {
-    // 只有在頁面捲動到最頂端時才啟動
-    if (window.scrollY === 0 && !isRefreshing) {
-        pStart.x = e.touches[0].screenX;
-        pStart.y = e.touches[0].screenY;
-        isDragging = true;
-        refreshIndicator.style.transition = 'none'; // 拖曳時移除過渡動畫以確保跟隨手指
-    }
-}, { passive: true });
-
-contentBody.addEventListener('touchmove', (e) => {
-    if (!isDragging || isRefreshing) return;
-
-    pCurrent.y = e.touches[0].screenY;
-    const diff = pCurrent.y - pStart.y;
-
-    // 只有往下拉 (diff > 0) 且頁面在頂部
-    if (diff > 0 && window.scrollY <= 0) {
-        // 增加阻尼感 (拉越長越難拉)
-        const translateY = Math.min(diff * 0.4, MAX_Y); 
         
-        // 移動指示器 (預設隱藏在 -100px，所以要加回來)
-        // 我們希望它從頂部滑下來，所以 translateY 加上原本的偏移
-        refreshIndicator.style.transform = `translateY(${translateY - 100}px)`;
-        
-        // 旋轉圖示隨距離變化
-        const rotate = Math.min(diff * 1.5, 360);
-        refreshIcon.style.transform = `rotate(${rotate}deg)`;
+        // --- 下拉刷新 (Pull to Refresh) 邏輯 ---
+        let pStart = { x: 0, y: 0 };
+        let pCurrent = { x: 0, y: 0 };
+        let isDragging = false;
+        let isRefreshing = false;
 
-        // 如果拉得夠長，圖示變色提示
-        if (translateY > THRESHOLD * 0.4) { // 這裡的 threshold 係數配合阻尼調整
-            refreshIcon.classList.add('text-white');
-            refreshIcon.classList.remove('text-accent');
-        }
-    }
-}, { passive: true });
+        const contentBody = document.body;
+        const refreshIndicator = document.getElementById('pull-refresh-indicator');
+        const refreshIcon = document.getElementById('refresh-icon');
+        const MAX_Y = 180; 
+        const THRESHOLD = 80; 
 
-contentBody.addEventListener('touchend', async (e) => {
-    if (!isDragging || isRefreshing) return;
-    isDragging = false;
-    refreshIndicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'; // 恢復動畫
+        contentBody.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0 && !isRefreshing) {
+                pStart.x = e.touches[0].screenX;
+                pStart.y = e.touches[0].screenY;
+                isDragging = true;
+                refreshIndicator.style.transition = 'none'; 
+            }
+        }, { passive: true });
 
-    const diff = pCurrent.y - pStart.y;
-    // 判斷是否超過門檻 (考慮阻尼係數 0.4，實際拉動距離要除以 0.4)
-    // 簡單判斷：如果指示器位置有明顯下來
-    const currentTransform = refreshIndicator.style.transform;
-    // 解析目前的 Y 值，這是一個簡化的判定方式
-    const isReadyToRefresh = diff > (THRESHOLD / 0.4); 
+        contentBody.addEventListener('touchmove', (e) => {
+            if (!isDragging || isRefreshing) return;
 
-    if (isReadyToRefresh) {
-        // --- 觸發刷新 ---
-        isRefreshing = true;
-        
-        // 1. 讓載入圈圈停在畫面上
-        refreshIndicator.style.transform = `translateY(10px)`; // 停在稍微下面的位置
-        refreshIcon.classList.add('fa-spin'); // 加入旋轉動畫
+            pCurrent.y = e.touches[0].screenY;
+            const diff = pCurrent.y - pStart.y;
 
-        try {
-            // 2. 執行刷新動作 (根據目前所在的頁面)
-            await performRefresh();
-        } catch (error) {
-            console.error(error);
-        } finally {
-            // 3. 結束刷新，復原 UI
-            setTimeout(() => {
-                isRefreshing = false;
+            if (diff > 0 && window.scrollY <= 0) {
+                const translateY = Math.min(diff * 0.4, MAX_Y); 
+                refreshIndicator.style.transform = `translateY(${translateY - 100}px)`;
+                const rotate = Math.min(diff * 1.5, 360);
+                refreshIcon.style.transform = `rotate(${rotate}deg)`;
+
+                if (translateY > THRESHOLD * 0.4) { 
+                    refreshIcon.classList.add('text-white');
+                    refreshIcon.classList.remove('text-accent');
+                }
+            }
+        }, { passive: true });
+
+        contentBody.addEventListener('touchend', async (e) => {
+            if (!isDragging || isRefreshing) return;
+            isDragging = false;
+            refreshIndicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'; 
+
+            const diff = pCurrent.y - pStart.y;
+            const currentTransform = refreshIndicator.style.transform;
+            const isReadyToRefresh = diff > (THRESHOLD / 0.4); 
+
+            if (isReadyToRefresh) {
+                isRefreshing = true;
+                refreshIndicator.style.transform = `translateY(10px)`; 
+                refreshIcon.classList.add('fa-spin'); 
+
+                try {
+                    await performRefresh();
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    setTimeout(() => {
+                        isRefreshing = false;
+                        refreshIndicator.style.transform = `translateY(-100px)`;
+                        refreshIcon.classList.remove('fa-spin', 'text-white');
+                        refreshIcon.classList.add('text-accent');
+                        refreshIcon.style.transform = `rotate(0deg)`;
+                    }, 500); 
+                }
+
+            } else {
                 refreshIndicator.style.transform = `translateY(-100px)`;
-                refreshIcon.classList.remove('fa-spin', 'text-white');
+                refreshIcon.classList.remove('text-white');
                 refreshIcon.classList.add('text-accent');
-                refreshIcon.style.transform = `rotate(0deg)`;
-            }, 500); // 稍微延遲讓使用者看到完成
+            }
+            pCurrent.y = 0;
+        });
+
+        async function performRefresh() {
+            const dashboard = document.getElementById('view-dashboard');
+            const mainApp = document.getElementById('view-main-app');
+
+            if (dashboard.classList.contains('active')) {
+                await loadTripsList();
+            } else if (mainApp.classList.contains('active')) {
+                await initMainApp(true); 
+            }
         }
 
-    } else {
-        // --- 取消刷新 (彈回去) ---
-        refreshIndicator.style.transform = `translateY(-100px)`;
-        refreshIcon.classList.remove('text-white');
-        refreshIcon.classList.add('text-accent');
-    }
-    
-    // 重置
-    pCurrent.y = 0;
-});
-
-// --- 判斷目前在哪個頁面並刷新資料 ---
-async function performRefresh() {
-    // 檢查哪個 View 是 active 的
-    const dashboard = document.getElementById('view-dashboard');
-    const mainApp = document.getElementById('view-main-app');
-
-    if (dashboard.classList.contains('active')) {
-        // 如果在儀表板，重新載入行程列表
-        await loadTripsList();
-    } else if (mainApp.classList.contains('active')) {
-        // 如果在行程內，重新載入該行程所有資料
-        // 注意：initMainApp 裡面已經有 loading-overlay，
-        // 為了體驗流暢，我們可以暫時隱藏全螢幕 loading，只用下拉的小圈圈，
-        // 或者直接呼叫它，讓它蓋住畫面也可以。
-        // 這裡示範重新呼叫 initMainApp (它會觸發 DB 讀取)
-        
-        // 小技巧：為了避免 initMainApp 裡的 loading-overlay 閃爍，
-        // 可以傳入一個參數告訴它不要顯示 overlay，或者就讓它閃一下也沒關係。
-        // 這裡直接呼叫最簡單：
-        await initMainApp(); 
-    }
-}
-
-// --- 強制使用 Safari 開啟外部連結 ---
-// --- 強制使用 Safari 開啟外部連結 (iOS PWA 專用修復版) ---
-function openExternal(url) {
-    if (!url) return;
-    
-    // 1. 確保網址格式正確
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-    }
-
-    // 2. 針對 iOS PWA 的特殊處理：建立隱藏連結並點擊
-    // 這種方式比 window.open 更能穩定地喚起 Safari
-    const a = document.createElement('a');
-    a.setAttribute('href', url);
-    a.setAttribute('target', '_blank');
-    
-    // 設定 rel 屬性以增加安全性並提示瀏覽器為外部連結
-    a.setAttribute('rel', 'external noopener noreferrer');
-    
-    // 將元素暫時加入 DOM (iOS 某些版本需要元素在 DOM 中才能觸發點擊)
-    document.body.appendChild(a);
-    a.click();
-    
-    // 清理 DOM
-    document.body.removeChild(a);
-}
-    
+        // --- 強制使用 Safari 開啟外部連結 (iOS PWA 專用修復版) ---
+        function openExternal(url) {
+            if (!url) return;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            // 這種方式比 window.open 更能穩定地喚起 Safari
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'external noopener noreferrer');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
     </script>
 </body>
 </html>
