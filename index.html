@@ -14,7 +14,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Roboto+Mono:wght@500;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
-    
+    <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -1213,7 +1214,7 @@
                 </div>
 
                 <div class="text-center mt-10 mb-6 opacity-40 hover:opacity-80 transition-opacity select-none">
-                    <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.0</p>
+                    <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.1</p>
                     <p class="text-[10px] text-slate-500 font-display font-bold mt-1">
                         Powered by <span class="text-accent">Hioklu</span>
                     </p>
@@ -1428,20 +1429,35 @@
         }
 
         // --- 強制使用 Safari 開啟外部連結 (iOS PWA 專用修復版) ---
-        function openExternal(url) {
-            if (!url) return;
-            if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                url = 'https://' + url;
-            }
-            // 這種方式比 window.open 更能穩定地喚起 Safari
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('target', '_blank');
-            a.setAttribute('rel', 'external noopener noreferrer');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
+        // --- 強制使用 Safari 開啟外部連結 (修正版) ---
+function openExternal(url) {
+    if (!url) return;
+    
+    // 1. 確保網址格式正確
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+    }
+
+    // 2. 偵測是否為 iOS PWA 模式 (Standalone)
+    const isStandalone = ('standalone' in window.navigator) && (window.navigator.standalone);
+
+    if (isStandalone) {
+        // 在 iOS PWA 模式下：
+        // 方法 A: 使用 window.open (大部分情況會開啟子視窗/In-App Browser)
+        // 方法 B: 如果您希望它"跳出" App 到 Safari，通常需要該網址不在 Scope 內
+        // 由於您沒有 manifest.json，最穩定的方式是用 window.open
+        window.open(url, '_blank');
+    } else {
+        // 一般瀏覽器模式
+        const a = document.createElement('a');
+        a.setAttribute('href', url);
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'external noopener noreferrer');
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+}
     </script>
 </body>
 </html>
