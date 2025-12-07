@@ -96,6 +96,11 @@
             position: fixed; inset: 0; background: #0f172a; z-index: 100;
             display: flex; justify-content: center; align-items: center; transition: opacity 0.5s;
         }
+        
+        /* Input Reset for Mobile Date/Time styling consistency */
+        input[type="time"], input[type="date"] {
+            min-height: 44px; /* Ensure touch target size */
+        }
     </style>
 </head>
 <body>
@@ -139,7 +144,7 @@
                 </h3>
             </div>
             
-            <div class="px-6 py-4 overflow-y-auto flex-1 overscroll-contain space-y-4" id="modal-body">
+            <div class="px-6 py-4 overflow-y-auto flex-1 overscroll-contain space-y-4">
                 <input type="hidden" id="edit-id">
                 
                 <div>
@@ -151,28 +156,28 @@
 
                 <div>
                     <label class="text-xs text-textSub block mb-1">標題</label>
-                    <input type="text" id="edit-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none placeholder-slate-600 transition-colors" placeholder="行程標題">
+                    <input type="text" id="edit-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none placeholder-slate-600 transition-colors" placeholder="行程標題">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-xs text-textSub block mb-1">開始時間</label>
-                        <input type="time" id="edit-time" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                        <input type="time" id="edit-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none">
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-xs text-textSub block mb-1">持續 (分鐘)</label>
-                        <input type="number" id="edit-duration" min="0" step="15" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="例如: 90">
+                        <input type="number" id="edit-duration" min="0" step="15" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="例如: 90">
                     </div>
                 </div>
 
                 <div>
                     <label class="text-xs text-textSub block mb-1">備註 / 描述</label>
-                    <textarea id="edit-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none resize-none" placeholder="詳細內容..."></textarea>
+                    <textarea id="edit-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none resize-none" placeholder="詳細內容..."></textarea>
                 </div>
 
                 <div>
                     <label class="text-xs text-textSub block mb-1">Google Maps 關鍵字 (選填)</label>
-                    <input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="地點名稱">
+                    <input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="地點名稱">
                 </div>
 
                 <div class="flex items-center gap-2 pt-2">
@@ -206,51 +211,57 @@
                 <input type="hidden" id="flight-id">
                 
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-xs text-textSub block mb-1">航空公司</label>
-                        <input type="text" id="flight-airline" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="泰獅航">
+                        <input type="text" id="flight-airline" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="泰獅航">
                     </div>
-                    <div>
+                    <div class="min-w-0">
                         <label class="text-xs text-textSub block mb-1">航班代號</label>
-                        <input type="text" id="flight-code" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="SL396">
+                        <input type="text" id="flight-code" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="SL396">
                     </div>
                 </div>
                 
-                <div>
+                <div class="min-w-0">
                     <label class="text-xs text-textSub block mb-1">日期</label>
-                    <input type="date" id="flight-date" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                    <input type="date" id="flight-date" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none">
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs text-textSub block mb-1">出發時間</label>
-                        <input type="time" id="flight-dep-time" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-textSub block mb-1">出發機場/航廈</label>
-                        <input type="text" id="flight-dep-port" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="TPE T1">
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs text-textSub block mb-1">抵達時間</label>
-                        <input type="time" id="flight-arr-time" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-textSub block mb-1">抵達機場/航廈</label>
-                        <input type="text" id="flight-arr-port" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="KIX T1">
+                <div>
+                    <label class="text-xs text-accent font-bold block mb-1">出發資訊</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="min-w-0">
+                            <label class="text-[10px] text-textSub block mb-1">時間</label>
+                            <input type="time" id="flight-dep-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none">
+                        </div>
+                        <div class="min-w-0">
+                            <label class="text-[10px] text-textSub block mb-1">航廈/機場</label>
+                            <input type="text" id="flight-dep-port" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="TPE T1">
+                        </div>
                     </div>
                 </div>
                 
                 <div>
+                    <label class="text-xs text-accent font-bold block mb-1">抵達資訊</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="min-w-0">
+                            <label class="text-[10px] text-textSub block mb-1">時間</label>
+                            <input type="time" id="flight-arr-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none">
+                        </div>
+                        <div class="min-w-0">
+                            <label class="text-[10px] text-textSub block mb-1">航廈/機場</label>
+                            <input type="text" id="flight-arr-port" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="KIX T1">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="min-w-0">
                     <label class="text-xs text-textSub block mb-1">訂位代號 (PNR)</label>
-                    <input type="text" id="flight-pnr" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none font-mono text-accent" placeholder="ABCDEF">
+                    <input type="text" id="flight-pnr" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none font-mono text-accent" placeholder="ABCDEF">
                 </div>
                 
-                <div>
+                <div class="min-w-0">
                     <label class="text-xs text-textSub block mb-1">連結 (線上報到/動態)</label>
-                    <input type="text" id="flight-link" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="http://...">
+                    <input type="text" id="flight-link" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none" placeholder="http://...">
                 </div>
                 
                 <div class="h-2"></div>
@@ -384,18 +395,15 @@
 
         async function init() {
             try {
-                // Fetch Itinerary
                 const snapshot = await db.collection('itinerary').get();
                 if (!snapshot.empty) {
                     snapshot.forEach(doc => { tripData[doc.id] = doc.data().events || []; });
                 }
 
-                // Fetch Accommodations
                 const accSnapshot = await db.collection('accommodations').get();
                 accommodationData = [];
                 accSnapshot.forEach(doc => { accommodationData.push({ ...doc.data(), docId: doc.id }); });
 
-                // Fetch Flights
                 const flightSnapshot = await db.collection('flights').orderBy('date').get();
                 flightData = [];
                 flightSnapshot.forEach(doc => { flightData.push({ ...doc.data(), docId: doc.id }); });
