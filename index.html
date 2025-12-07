@@ -228,6 +228,12 @@
         </div>
     </div>
 
+<div id="pull-refresh-indicator" class="fixed top-0 left-0 w-full flex justify-center items-start pt-4 z-[90] pointer-events-none transition-transform duration-200" style="transform: translateY(-100px);">
+    <div class="bg-slate-800/90 backdrop-blur text-white w-10 h-10 rounded-full shadow-lg border border-slate-600 flex items-center justify-center">
+        <i id="refresh-icon" class="fa-solid fa-arrow-rotate-right text-accent"></i>
+    </div>
+</div>
+    
     <section id="view-login" class="view-section">
         <div class="flex flex-col items-center justify-center h-screen px-6">
             <div class="w-full max-w-sm">
@@ -1345,6 +1351,127 @@ ${p.links.map(l => `<a href="javascript:void(0)" onclick="window.open('${l.url}'
         function selectIcon(t) { document.getElementById('edit-type').value=t; document.querySelectorAll('.icon-option').forEach(el=>{ if(el.dataset.type===t) { el.classList.add('bg-accent/20', 'border-accent'); el.querySelector('div').classList.replace('bg-slate-700', 'bg-accent'); } else { el.classList.remove('bg-accent/20', 'border-accent'); el.querySelector('div').classList.replace('bg-accent', 'bg-slate-700'); } }); }
         function openJsonModal() { if(IS_READ_ONLY) return; document.getElementById('json-input').value=''; document.getElementById('json-modal').classList.remove('hidden'); }
         function fillTemplate() { document.getElementById('json-input').value=JSON.stringify({"2026-01-24":[{id:101,time:"09:00",duration:210,type:"flight",title:"範例",desc:"...",isImportant:true}]},null,4); }
+    
+    // --- 下拉刷新 (Pull to Refresh) 邏輯 ---
+
+let pStart = { x: 0, y: 0 };
+let pCurrent = { x: 0, y: 0 };
+let isDragging = false;
+let isRefreshing = false;
+
+const contentBody = document.body;
+const refreshIndicator = document.getElementById('pull-refresh-indicator');
+const refreshIcon = document.getElementById('refresh-icon');
+const MAX_Y = 180; // 最大下拉距離 (像素)
+const THRESHOLD = 80; // 觸發刷新的門檻
+
+contentBody.addEventListener('touchstart', (e) => {
+    // 只有在頁面捲動到最頂端時才啟動
+    if (window.scrollY === 0 && !isRefreshing) {
+        pStart.x = e.touches[0].screenX;
+        pStart.y = e.touches[0].screenY;
+        isDragging = true;
+        refreshIndicator.style.transition = 'none'; // 拖曳時移除過渡動畫以確保跟隨手指
+    }
+}, { passive: true });
+
+contentBody.addEventListener('touchmove', (e) => {
+    if (!isDragging || isRefreshing) return;
+
+    pCurrent.y = e.touches[0].screenY;
+    const diff = pCurrent.y - pStart.y;
+
+    // 只有往下拉 (diff > 0) 且頁面在頂部
+    if (diff > 0 && window.scrollY <= 0) {
+        // 增加阻尼感 (拉越長越難拉)
+        const translateY = Math.min(diff * 0.4, MAX_Y); 
+        
+        // 移動指示器 (預設隱藏在 -100px，所以要加回來)
+        // 我們希望它從頂部滑下來，所以 translateY 加上原本的偏移
+        refreshIndicator.style.transform = `translateY(${translateY - 100}px)`;
+        
+        // 旋轉圖示隨距離變化
+        const rotate = Math.min(diff * 1.5, 360);
+        refreshIcon.style.transform = `rotate(${rotate}deg)`;
+
+        // 如果拉得夠長，圖示變色提示
+        if (translateY > THRESHOLD * 0.4) { // 這裡的 threshold 係數配合阻尼調整
+            refreshIcon.classList.add('text-white');
+            refreshIcon.classList.remove('text-accent');
+        }
+    }
+}, { passive: true });
+
+contentBody.addEventListener('touchend', async (e) => {
+    if (!isDragging || isRefreshing) return;
+    isDragging = false;
+    refreshIndicator.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'; // 恢復動畫
+
+    const diff = pCurrent.y - pStart.y;
+    // 判斷是否超過門檻 (考慮阻尼係數 0.4，實際拉動距離要除以 0.4)
+    // 簡單判斷：如果指示器位置有明顯下來
+    const currentTransform = refreshIndicator.style.transform;
+    // 解析目前的 Y 值，這是一個簡化的判定方式
+    const isReadyToRefresh = diff > (THRESHOLD / 0.4); 
+
+    if (isReadyToRefresh) {
+        // --- 觸發刷新 ---
+        isRefreshing = true;
+        
+        // 1. 讓載入圈圈停在畫面上
+        refreshIndicator.style.transform = `translateY(10px)`; // 停在稍微下面的位置
+        refreshIcon.classList.add('fa-spin'); // 加入旋轉動畫
+
+        try {
+            // 2. 執行刷新動作 (根據目前所在的頁面)
+            await performRefresh();
+        } catch (error) {
+            console.error(error);
+        } finally {
+            // 3. 結束刷新，復原 UI
+            setTimeout(() => {
+                isRefreshing = false;
+                refreshIndicator.style.transform = `translateY(-100px)`;
+                refreshIcon.classList.remove('fa-spin', 'text-white');
+                refreshIcon.classList.add('text-accent');
+                refreshIcon.style.transform = `rotate(0deg)`;
+            }, 500); // 稍微延遲讓使用者看到完成
+        }
+
+    } else {
+        // --- 取消刷新 (彈回去) ---
+        refreshIndicator.style.transform = `translateY(-100px)`;
+        refreshIcon.classList.remove('text-white');
+        refreshIcon.classList.add('text-accent');
+    }
+    
+    // 重置
+    pCurrent.y = 0;
+});
+
+// --- 判斷目前在哪個頁面並刷新資料 ---
+async function performRefresh() {
+    // 檢查哪個 View 是 active 的
+    const dashboard = document.getElementById('view-dashboard');
+    const mainApp = document.getElementById('view-main-app');
+
+    if (dashboard.classList.contains('active')) {
+        // 如果在儀表板，重新載入行程列表
+        await loadTripsList();
+    } else if (mainApp.classList.contains('active')) {
+        // 如果在行程內，重新載入該行程所有資料
+        // 注意：initMainApp 裡面已經有 loading-overlay，
+        // 為了體驗流暢，我們可以暫時隱藏全螢幕 loading，只用下拉的小圈圈，
+        // 或者直接呼叫它，讓它蓋住畫面也可以。
+        // 這裡示範重新呼叫 initMainApp (它會觸發 DB 讀取)
+        
+        // 小技巧：為了避免 initMainApp 裡的 loading-overlay 閃爍，
+        // 可以傳入一個參數告訴它不要顯示 overlay，或者就讓它閃一下也沒關係。
+        // 這裡直接呼叫最簡單：
+        await initMainApp(); 
+    }
+}
+    
     </script>
 </body>
 </html>
