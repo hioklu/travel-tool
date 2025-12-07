@@ -127,13 +127,17 @@
             width: 2px;
             background-color: #334155;
             /* 關鍵：讓線條佔據剩下的所有垂直空間 */
-            flex-grow: 1; 
+            flex-grow: 2; 
             /* 稍微與 Icon 保持一點距離，若希望完全緊貼可移除 mt-1 */
             margin-top: 3px; 
             margin-bottom: 4px;
         }
 
         .last-item .timeline-line { display: none; }
+
+        .group:last-child .timeline-line {
+           display: none;
+        }
         
         /* FAB Position Fix for PWA Safe Area */
         .fab { 
@@ -925,14 +929,12 @@
                     
                     // Swipe Structure
                     html += `
-                        <div class="flex gap-2 mb-1 group">
-                            <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
+                        <div class="flex gap-2 mb-4 group">  <div class="flex flex-col items-center w-14 flex-shrink-0 relative">
                                 <div class="text-xs font-mono font-bold text-textSub mb-2">${item.time}</div>
                                 <div class="w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-lg ${isImp ? 'bg-accent text-white' : 'bg-cardLight text-textSub border border-slate-600'}"><i class="${typeConfig.icon} text-sm"></i></div>
                                 <div class="timeline-line"></div>
                             </div>
-                            <div class="flex-1 min-w-0 pb-4">
-                                <div class="swipe-card-wrapper">
+                             <div class="flex-1 min-w-0"> <div class="swipe-card-wrapper">
                                     <div class="swipe-actions">
                                         <button ${deleteAttr} class="text-white font-bold px-4 h-full flex items-center justify-center"><i class="fa-solid fa-trash mr-1"></i>刪除</button>
                                     </div>
