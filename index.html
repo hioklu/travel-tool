@@ -190,7 +190,7 @@
         /* --- Feature 3: 重要行程卡片樣式修正 --- */
         .trip-card.important {
             /* 使用紫色漸層背景，並且覆蓋原本的深灰色背景 */
-            background: linear-gradient(115deg, #7742cc 0%,#9f66fa 35%, #0f172a 100%) !important; 
+            background: linear-gradient(130deg, #8f5be4 0%, #1e293b 60%,#1e293b 100%) !important; 
             /* 稍微調整左側邊框顏色使其更協調，非半透明 */
             border-left-color: #c4b5fd !important; 
         }
@@ -826,10 +826,48 @@
 
         // Auto Scroll to Date Button if cutoff
         function changeDate(date) {
-            activeDate = date; renderHeaderInfo(); renderPlan(document.getElementById('app'));
-            const btn = document.querySelector(`.date-sticky-bar button[onclick="changeDate('${date}')"]`);
-            if(btn) {
-                btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            // 1. [關鍵] 重繪前，先記錄舊的 Scroll 位置
+            // 因為 renderPlan 會整個清空 HTML 重畫，導致捲軸自動跳回最左邊
+            const oldBar = document.querySelector('.date-sticky-bar');
+            const oldScrollLeft = oldBar ? oldBar.scrollLeft : 0;
+
+            activeDate = date; 
+            renderHeaderInfo(); 
+            
+            // 2. 重繪畫面 (這時候 DOM 被更新了)
+            renderPlan(document.getElementById('app'));
+
+            // 3. 取得新的 Bar 與該日期的按鈕
+            const newBar = document.querySelector('.date-sticky-bar');
+            // 注意：這裡必須重新抓取按鈕，因為它是新生成的 DOM 元素
+            const btn = newBar ? newBar.querySelector(`button[onclick="changeDate('${date}')"]`) : null;
+
+            if(newBar && btn) {
+                // 4. [關鍵] 先「瞬間」恢復原本的捲軸位置
+                // 這樣如果按鈕原本就在畫面中間，使用者會感覺完全沒動
+                newBar.scrollLeft = oldScrollLeft;
+
+                // 5. 接著才計算「是否被遮擋」，需要時才滑動
+                const btnLeft = btn.offsetLeft;
+                const btnRight = btnLeft + btn.offsetWidth;
+                
+                const containerWidth = newBar.clientWidth;
+                // 注意：這裡要用恢復後的 scrollLeft 來計算可視範圍
+                const currentScroll = newBar.scrollLeft; 
+                const visibleRight = currentScroll + containerWidth;
+
+                const padding = 20; // 稍微多滑一點點，留個邊距
+
+                // 情況 2-A: 按鈕左邊被遮住 (在可視範圍左側之外)
+                if (btnLeft < currentScroll) {
+                    newBar.scrollTo({ left: btnLeft - padding, behavior: 'smooth' });
+                } 
+                // 情況 2-B: 按鈕右邊被遮住 (在可視範圍右側之外)
+                else if (btnRight > visibleRight) {
+                    newBar.scrollTo({ left: btnRight - containerWidth + padding, behavior: 'smooth' });
+                }
+                // 情況 1: 按鈕已經在可視範圍內 (btnLeft >= currentScroll && btnRight <= visibleRight)
+                // 什麼都不做，因為步驟 4 已經恢復了原本的位置，看起來就是靜止的
             }
         }
 
