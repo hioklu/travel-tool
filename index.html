@@ -32,10 +32,10 @@
                         display: ['"Poppins"', 'sans-serif'],
                     },
                     colors: {
-                        dark: '#0f172a',      
-                        card: '#1e293b',      
+                        dark: '#0f172a',       
+                        card: '#1e293b',       
                         cardLight: '#334155', 
-                        accent: '#a56ce6',    
+                        accent: '#a56ce6',     
                         subAccent: '#fbbf24', 
                         textMain: '#f8fafc',
                         textSub: '#94a3b8',
@@ -47,20 +47,67 @@
 
     <style>
         body {
-            background-color: #0f172a;
+            background-color: #0f172a; /* Body background for PC borders */
             color: #f8fafc;
             -webkit-tap-highlight-color: transparent;
             font-family: 'Noto Sans TC', sans-serif;
             overflow-x: hidden;
-            /* Support for safe area in standalone mode */
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            margin: 0;
         }
+
+        /* --- PC / Adaptive Layout Wrapper --- */
+        .mobile-wrapper {
+            max-width: 480px; /* Limit width on Desktop */
+            margin: 0 auto;   /* Center on Desktop */
+            background-color: #0f172a;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Shadow for desktop aesthetics */
+            overflow-x: hidden;
+        }
+
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- Glassmorphism & Header Logic --- */
         .glass-nav { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
-        .glass-header { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-header { 
+            background: rgba(15, 23, 42, 0.98); 
+            backdrop-filter: blur(12px); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            transition: transform 0.3s ease-in-out; /* Smooth slide */
+        }
+        
         .glass-modal { background: rgba(30, 41, 59, 0.98); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+
+        /* --- Hide Header on Scroll Logic --- */
+        /* When body has .header-hidden, move header up */
+        body.header-hidden .view-section.active header {
+            transform: translateY(-100%);
+        }
+
+        /* Date Bar Sticky Logic */
+        .date-sticky-bar {
+            position: sticky;
+            /* Default: Below the header (approx 80px + safe area) */
+            top: calc(70px + env(safe-area-inset-top)); 
+            z-index: 40; /* Lower than modal, higher than content */
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(12px);
+            transition: top 0.3s ease-in-out;
+            margin-left: -1rem; /* Counteract padding */
+            margin-right: -1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* When header is hidden, date bar moves to very top */
+        body.header-hidden .date-sticky-bar {
+            top: 0;
+            top: env(safe-area-inset-top);
+        }
+
         .timeline-line { position: absolute; left: 50%; transform: translateX(-50%); top: 45px; bottom: -30px; width: 2px; background-color: #334155; z-index: 0; }
         .last-item .timeline-line { display: none; }
         .trip-card { background: #1e293b; border-radius: 12px; border-left-width: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: transform 0.1s; cursor: pointer; }
@@ -68,24 +115,51 @@
         .trip-card.important { border-left-color: #a56ce6; background: linear-gradient(90deg, rgba(244,63,94,0.08) 0%, rgba(30,41,59,1) 100%); }
         .trip-card.normal { border-left-color: #64748b; }
         .nav-btn.active { color: #a56ce6; }
-        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background-color: #a56ce6; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4); z-index: 40; transition: transform 0.2s; }
+        
+        /* FAB Position needs to be absolute relative to wrapper */
+        .fab { 
+            position: fixed; 
+            bottom: 80px; 
+            right: 20px; 
+            /* On PC, align relative to the wrapper center */
+            margin-right: calc((100vw - 480px) / 2);
+            width: 56px; height: 56px; background-color: #a56ce6; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4); z-index: 40; transition: transform 0.2s; 
+        }
+        @media (max-width: 480px) {
+            .fab { margin-right: 0; right: 20px; }
+        }
+
         .fab:active { transform: scale(0.9); }
         .fab.readonly-hidden { display: none !important; }
         .edit-btn.readonly-hidden { display: none !important; }
+        
         #loading-overlay { position: fixed; inset: 0; background: #0f172a; z-index: 100; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s; }
-        .view-section { display: none; min-height: 100vh; }
+        
+        .view-section { display: none; min-height: 100vh; padding-bottom: 80px; }
         .view-section.active { display: block; }
+        
         input[type="time"], input[type="date"] { min-height: 44px; }
         
         /* Read Only Styles */
         body.is-read-only .edit-trigger { display: none !important; }
         body.is-read-only .delete-trigger { display: none !important; }
         body.is-read-only #fab-add { display: none !important; }
+        
+        /* Fix Nav Bar on PC */
+        .glass-nav {
+            max-width: 480px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .glass-header {
+            max-width: 480px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
     </style>
 </head>
 <body>
-
-    <div id="loading-overlay">
+<div class="mobile-wrapper"> <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <i class="fa-solid fa-plane-up fa-bounce text-4xl text-accent mb-4"></i>
             <p class="text-sm text-slate-400 font-mono">載入中...</p>
@@ -129,7 +203,7 @@
     </section>
 
     <section id="view-dashboard" class="view-section pt-20 px-4">
-        <header class="glass-header fixed top-0 left-0 w-full z-50 h-[70px] flex justify-between items-center px-5 pt-[env(safe-area-inset-top)]">
+        <header class="glass-header fixed top-0 w-full z-50 h-[70px] flex justify-between items-center px-5 pt-[env(safe-area-inset-top)]">
             <h1 class="font-display font-bold text-xl text-white">行程總覽</h1>
             <button onclick="logout()" class="text-slate-400 hover:text-white text-sm"><i class="fa-solid fa-right-from-bracket"></i> <span id="user-status-text">登出</span></button>
         </header>
@@ -159,44 +233,9 @@
         <button onclick="openCreateTripModal()" id="fab-create-trip" class="fab">
             <i class="fa-solid fa-plus text-white text-xl"></i>
         </button>
-
-        <div id="create-trip-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-                <h3 class="text-lg font-bold mb-4 text-white">建立新行程</h3>
-                <div class="space-y-3">
-                    <input type="text" id="new-trip-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="行程名稱">
-                    <input type="text" id="new-trip-desc" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="簡短描述">
-                </div>
-                <div class="flex gap-3 mt-6">
-                    <button onclick="document.getElementById('create-trip-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
-                    <button onclick="createNewTrip()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">建立</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="edit-trip-info-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-                <h3 class="text-lg font-bold mb-4 text-white">編輯行程資訊</h3>
-                <input type="hidden" id="edit-trip-info-id">
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs text-slate-400 ml-1">行程名稱</label>
-                        <input type="text" id="edit-trip-info-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 ml-1">簡短描述</label>
-                        <input type="text" id="edit-trip-info-desc" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
-                    </div>
-                </div>
-                <div class="flex gap-3 mt-6">
-                    <button onclick="document.getElementById('edit-trip-info-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
-                    <button onclick="updateTripInfo()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">儲存</button>
-                </div>
-            </div>
-        </div>
     </section>
 
-    <section id="view-main-app" class="view-section pt-[110px] pb-24">
+    <section id="view-main-app" class="view-section pt-[80px] pb-24">
         <header class="glass-header fixed top-0 w-full z-50 h-auto flex justify-between items-center px-4 pt-[calc(env(safe-area-inset-top)+10px)] pb-3">
             <div class="flex items-center gap-3 flex-1 min-w-0">
                 <button onclick="backToDashboard()" class="w-9 h-9 flex items-center justify-center rounded-full bg-slate-800/50 text-slate-300 hover:text-white hover:bg-slate-700 transition flex-shrink-0">
@@ -227,128 +266,11 @@
             </div>
         </header>
 
-        <div id="app" class="px-4 pt-4 min-h-screen"></div>
+        <div id="app" class="px-4 min-h-screen"></div>
 
         <button id="fab-add" onclick="openEditModal(null)" class="fab hidden">
             <i class="fa-solid fa-plus text-white text-xl"></i>
         </button>
-
-        <div id="trip-settings-modal" class="fixed inset-0 bg-black/80 z-[75] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
-                <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
-                    <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-users-gear text-accent"></i> 行程設定</h3>
-                    <button onclick="document.getElementById('trip-settings-modal').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-times"></i></button>
-                </div>
-                
-                <div class="space-y-6 overflow-y-auto">
-                    <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                        <label class="text-xs text-slate-400 block mb-1">行程 ID (點擊複製)</label>
-                        <div onclick="copyTripId()" class="font-mono text-sm text-accent break-all cursor-pointer hover:text-white transition" id="settings-trip-id"></div>
-                    </div>
-
-                    <div>
-                        <h4 class="text-sm font-bold text-white mb-2">天氣地點設定</h4>
-                        <div class="flex gap-2 mb-1">
-                            <input type="text" id="settings-weather-city" placeholder="輸入城市英文 (ex: Osaka)" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
-                            <button onclick="saveWeatherLocation()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">儲存</button>
-                        </div>
-                        <p class="text-[10px] text-slate-500">輸入城市後，系統將自動抓取當前天氣</p>
-                    </div>
-
-                    <div class="flex items-center justify-between border-t border-slate-700 pt-4">
-                        <div>
-                            <h4 class="text-sm font-bold text-white">允許訪客檢視 (公開)</h4>
-                            <p class="text-xs text-slate-400">開啟後，任何人只要有 ID 即可檢視行程(唯讀)</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="settings-is-public" class="sr-only peer" onchange="togglePublicStatus()">
-                            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
-                        </label>
-                    </div>
-
-                    <div>
-                        <h4 class="text-sm font-bold text-white mb-2">協作者 (可編輯)</h4>
-                        <div class="flex gap-2 mb-3">
-                            <input type="email" id="collab-email" placeholder="輸入 Email" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
-                            <button onclick="addCollaborator()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">新增</button>
-                        </div>
-                        <div id="collab-list" class="space-y-2 max-h-[150px] overflow-y-auto"></div>
-                    </div>
-
-                     <div class="pt-4 border-t border-slate-700">
-                        <button onclick="deleteTrip(CURRENT_TRIP_ID)" class="w-full py-2 rounded-lg bg-red-900/30 text-red-400 border border-red-900/50 text-sm font-bold hover:bg-red-900/50">刪除此行程</button>
-                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="edit-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="glass-modal w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-                <div class="px-6 py-4 border-b border-white/10 flex-none"><h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-accent"></i> <span id="modal-title">編輯行程</span></h3></div>
-                <div class="px-6 py-4 overflow-y-auto flex-1 overscroll-contain space-y-4">
-                    <input type="hidden" id="edit-id">
-                    <div><label class="text-xs text-textSub block mb-2">類型圖示</label><div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar" id="icon-selector"></div><input type="hidden" id="edit-type" value="transport"></div>
-                    <div><label class="text-xs text-textSub block mb-1">標題</label><input type="text" id="edit-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none"></div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="min-w-0"><label class="text-xs text-textSub block mb-1">開始時間</label><input type="time" id="edit-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
-                        <div class="min-w-0"><label class="text-xs text-textSub block mb-1">持續 (分鐘)</label><input type="number" id="edit-duration" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
-                    </div>
-                    <div><label class="text-xs text-textSub block mb-1">備註</label><textarea id="edit-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></textarea></div>
-                    <div><label class="text-xs text-textSub block mb-1">Google Maps</label><input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
-                    <div class="flex items-center gap-2 pt-2"><input type="checkbox" id="edit-important" class="w-5 h-5 rounded bg-dark border-slate-600 text-accent"><label for="edit-important" class="text-sm text-white">標記為重要行程</label></div>
-                </div>
-                <div class="px-6 py-4 border-t border-white/10 flex-none flex gap-3 bg-card/50 backdrop-blur-md rounded-b-2xl">
-                    <button onclick="deleteEvent()" id="btn-delete" class="w-12 flex-none py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hidden flex items-center justify-center delete-trigger"><i class="fa-solid fa-trash"></i></button>
-                    <button onclick="closeEditModal()" class="flex-1 py-3 rounded-xl bg-slate-700 text-slate-200">取消</button>
-                    <button onclick="saveEvent()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">儲存</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="flight-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-                <div class="px-6 py-4 border-b border-white/10 flex-none"><h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane text-accent"></i> <span id="flight-modal-title">新增航班</span></h3></div>
-                <div class="px-6 py-4 overflow-y-auto flex-1 overscroll-contain space-y-4">
-                    <input type="hidden" id="flight-id">
-                    <div class="grid grid-cols-2 gap-3"><div class="min-w-0"><label class="text-xs text-textSub">航空公司</label><input type="text" id="flight-airline" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div><div class="min-w-0"><label class="text-xs text-textSub">代號</label><input type="text" id="flight-code" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div></div>
-                    <div class="min-w-0"><label class="text-xs text-textSub">日期</label><input type="date" id="flight-date" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
-                    <div><label class="text-xs text-accent font-bold">出發</label><div class="grid grid-cols-2 gap-3"><input type="time" id="flight-dep-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"><input type="text" id="flight-dep-port" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white" placeholder="機場/航廈"></div></div>
-                    <div><label class="text-xs text-accent font-bold">抵達</label><div class="grid grid-cols-2 gap-3"><input type="time" id="flight-arr-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"><input type="text" id="flight-arr-port" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white" placeholder="機場/航廈"></div></div>
-                    <div class="min-w-0"><label class="text-xs text-textSub">訂位代號</label><input type="text" id="flight-pnr" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white font-mono text-accent"></div>
-                    <div class="min-w-0"><label class="text-xs text-textSub">連結</label><input type="text" id="flight-link" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
-                </div>
-                <div class="px-6 py-4 border-t border-white/10 flex-none flex gap-3 bg-card/50 backdrop-blur-md rounded-b-2xl">
-                    <button onclick="deleteFlight()" id="btn-flight-delete" class="w-12 flex-none py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hidden flex items-center justify-center delete-trigger"><i class="fa-solid fa-trash"></i></button>
-                    <button onclick="closeFlightModal()" class="flex-1 py-3 rounded-xl bg-slate-700 text-slate-200">取消</button>
-                    <button onclick="saveFlight()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">儲存</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="info-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl p-6">
-                <h3 class="text-lg font-bold mb-4 text-white"><i class="fa-solid fa-hotel text-subAccent"></i> <span id="info-modal-title">住宿資訊</span></h3>
-                <input type="hidden" id="info-id">
-                <div class="space-y-3">
-                    <div><label class="text-xs text-textSub">名稱</label><input type="text" id="info-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div>
-                    <div><label class="text-xs text-textSub">描述</label><input type="text" id="info-subtitle" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div>
-                    <div><label class="text-xs text-textSub">地址</label><textarea id="info-address" rows="2" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></textarea></div>
-                </div>
-                <div class="flex gap-3 mt-6">
-                    <button onclick="deleteAccommodation()" id="btn-info-delete" class="w-12 flex-none py-3 rounded-xl bg-red-900/50 text-red-400 border border-red-500/20 hidden flex items-center justify-center delete-trigger"><i class="fa-solid fa-trash"></i></button>
-                    <button onclick="document.getElementById('info-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-slate-200">取消</button>
-                    <button onclick="saveAccommodation()" class="flex-1 py-3 rounded-xl bg-subAccent text-dark font-bold edit-trigger">儲存</button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="park-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]"><div class="flex-none mb-4"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket text-subAccent"></i> <span id="park-modal-title">票券資訊</span></h3></div><div class="flex-1 overflow-y-auto pr-2 space-y-3"><input type="hidden" id="park-id"><div><label class="text-xs text-textSub">標題</label><input type="text" id="park-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div><div><label class="text-xs text-textSub">地圖 Embed</label><input type="text" id="park-map" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div><div><label class="text-xs text-textSub">連結</label><div id="park-links-container" class="space-y-2"></div><button onclick="addParkLink()" class="mt-2 text-xs text-accent border border-accent/50 px-2 py-1 rounded edit-trigger">+ 連結</button></div><div><label class="text-xs text-textSub">說明</label><textarea id="park-desc" rows="3" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></textarea></div></div><div class="flex-none flex gap-3 mt-4"><button onclick="deletePark()" id="btn-park-delete" class="px-4 py-2 rounded bg-red-900/50 text-red-400 hidden delete-trigger"><i class="fa-solid fa-trash"></i></button><button onclick="document.getElementById('park-modal').classList.add('hidden')" class="flex-1 py-2 rounded bg-slate-700 text-slate-200">取消</button><button onclick="savePark()" class="flex-1 py-2 rounded bg-subAccent text-dark font-bold edit-trigger">儲存</button></div></div></div>
-
-        <div id="highlight-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]"><div class="flex-none mb-4"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star text-blue-400"></i> <span id="highlight-modal-title">重點</span></h3></div><div class="flex-1 overflow-y-auto pr-2 space-y-3"><input type="hidden" id="highlight-id"><div><label class="text-xs text-textSub">大標題</label><input type="text" id="highlight-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div><div><label class="text-xs text-textSub">子項目</label><div id="highlight-items-container" class="space-y-2"></div><button onclick="addHighlightItem()" class="mt-2 text-xs text-accent border border-accent/50 px-2 py-1 rounded edit-trigger">+ 子項目</button></div></div><div class="flex-none flex gap-3 mt-4"><button onclick="deleteHighlight()" id="btn-highlight-delete" class="px-4 py-2 rounded bg-red-900/50 text-red-400 hidden delete-trigger"><i class="fa-solid fa-trash"></i></button><button onclick="document.getElementById('highlight-modal').classList.add('hidden')" class="flex-1 py-2 rounded bg-slate-700 text-slate-200">取消</button><button onclick="saveHighlight()" class="flex-1 py-2 rounded bg-blue-500 text-white font-bold edit-trigger">儲存</button></div></div></div>
-
-        <div id="date-settings-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl"><h3 class="text-lg font-bold mb-4 text-white" id="date-modal-title">日期設定</h3><input type="hidden" id="date-modal-mode"><div class="mb-6"><label class="text-xs text-textSub block mb-1">選擇日期</label><input type="date" id="settings-day-date" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white"></div><div class="flex gap-3"><button id="btn-delete-day" onclick="deleteCurrentDay()" class="hidden px-4 py-3 rounded-xl bg-red-900/30 text-red-400 delete-trigger"><i class="fa-solid fa-trash-can"></i></button><button onclick="document.getElementById('date-settings-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700">取消</button><button onclick="confirmDateSettings()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">確認</button></div></div></div>
-
-        <div id="json-modal" class="fixed inset-0 bg-black/80 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-file-code text-subAccent"></i> 匯入 JSON</h3><button onclick="fillTemplate()" class="text-xs text-accent border border-accent/50 px-2 py-1 rounded">載入範本</button></div><textarea id="json-input" class="w-full flex-1 bg-dark border border-slate-600 rounded-lg p-3 text-white font-mono text-xs h-[300px] mb-6"></textarea><div class="flex gap-3"><button onclick="document.getElementById('json-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700">取消</button><button onclick="confirmJsonImport()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">確認</button></div></div></div>
 
         <nav class="glass-nav fixed bottom-0 w-full z-40 pb-[env(safe-area-inset-bottom)]">
             <div class="flex justify-around items-center h-16">
@@ -364,6 +286,158 @@
             </div>
         </nav>
     </section>
+
+</div> <div id="create-trip-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-white">建立新行程</h3>
+            <div class="space-y-3">
+                <input type="text" id="new-trip-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="行程名稱">
+                <input type="text" id="new-trip-desc" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none" placeholder="簡短描述">
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="document.getElementById('create-trip-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="createNewTrip()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">建立</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-trip-info-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-white">編輯行程資訊</h3>
+            <input type="hidden" id="edit-trip-info-id">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400 ml-1">行程名稱</label>
+                    <input type="text" id="edit-trip-info-title" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 ml-1">簡短描述</label>
+                    <input type="text" id="edit-trip-info-desc" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white focus:border-accent outline-none">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="document.getElementById('edit-trip-info-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-textSub">取消</button>
+                <button onclick="updateTripInfo()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="trip-settings-modal" class="fixed inset-0 bg-black/80 z-[75] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-users-gear text-accent"></i> 行程設定</h3>
+                <button onclick="document.getElementById('trip-settings-modal').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-times"></i></button>
+            </div>
+            
+            <div class="space-y-6 overflow-y-auto">
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                    <label class="text-xs text-slate-400 block mb-1">行程 ID (點擊複製)</label>
+                    <div onclick="copyTripId()" class="font-mono text-sm text-accent break-all cursor-pointer hover:text-white transition" id="settings-trip-id"></div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-bold text-white mb-2">天氣地點設定</h4>
+                    <div class="flex gap-2 mb-1">
+                        <input type="text" id="settings-weather-city" placeholder="輸入城市英文 (ex: Osaka)" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
+                        <button onclick="saveWeatherLocation()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">儲存</button>
+                    </div>
+                    <p class="text-[10px] text-slate-500">輸入城市後，系統將自動抓取當前天氣</p>
+                </div>
+
+                <div class="flex items-center justify-between border-t border-slate-700 pt-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">允許訪客檢視 (公開)</h4>
+                        <p class="text-xs text-slate-400">開啟後，任何人只要有 ID 即可檢視行程(唯讀)</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="settings-is-public" class="sr-only peer" onchange="togglePublicStatus()">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                    </label>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-bold text-white mb-2">協作者 (可編輯)</h4>
+                    <div class="flex gap-2 mb-3">
+                        <input type="email" id="collab-email" placeholder="輸入 Email" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2 text-sm text-white">
+                        <button onclick="addCollaborator()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">新增</button>
+                    </div>
+                    <div id="collab-list" class="space-y-2 max-h-[150px] overflow-y-auto"></div>
+                </div>
+
+                 <div class="pt-4 border-t border-slate-700">
+                    <button onclick="deleteTrip(CURRENT_TRIP_ID)" class="w-full py-2 rounded-lg bg-red-900/30 text-red-400 border border-red-900/50 text-sm font-bold hover:bg-red-900/50">刪除此行程</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-lg rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-white/10 flex-none"><h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-pen-to-square text-accent"></i> <span id="modal-title">編輯行程</span></h3></div>
+            <div class="px-6 py-4 overflow-y-auto flex-1 overscroll-contain space-y-4">
+                <input type="hidden" id="edit-id">
+                <div><label class="text-xs text-textSub block mb-2">類型圖示</label><div class="flex gap-3 overflow-x-auto pb-2 no-scrollbar" id="icon-selector"></div><input type="hidden" id="edit-type" value="transport"></div>
+                <div><label class="text-xs text-textSub block mb-1">標題</label><input type="text" id="edit-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:border-accent outline-none"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="min-w-0"><label class="text-xs text-textSub block mb-1">開始時間</label><input type="time" id="edit-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
+                    <div class="min-w-0"><label class="text-xs text-textSub block mb-1">持續 (分鐘)</label><input type="number" id="edit-duration" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
+                </div>
+                <div><label class="text-xs text-textSub block mb-1">備註</label><textarea id="edit-desc" rows="4" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></textarea></div>
+                <div><label class="text-xs text-textSub block mb-1">Google Maps</label><input type="text" id="edit-location" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
+                <div class="flex items-center gap-2 pt-2"><input type="checkbox" id="edit-important" class="w-5 h-5 rounded bg-dark border-slate-600 text-accent"><label for="edit-important" class="text-sm text-white">標記為重要行程</label></div>
+            </div>
+            <div class="px-6 py-4 border-t border-white/10 flex-none flex gap-3 bg-card/50 backdrop-blur-md rounded-b-2xl">
+                <button onclick="deleteEvent()" id="btn-delete" class="w-12 flex-none py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hidden flex items-center justify-center delete-trigger"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="closeEditModal()" class="flex-1 py-3 rounded-xl bg-slate-700 text-slate-200">取消</button>
+                <button onclick="saveEvent()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="flight-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-white/10 flex-none"><h3 class="text-lg font-bold text-white flex items-center gap-2"><i class="fa-solid fa-plane text-accent"></i> <span id="flight-modal-title">新增航班</span></h3></div>
+            <div class="px-6 py-4 overflow-y-auto flex-1 overscroll-contain space-y-4">
+                <input type="hidden" id="flight-id">
+                <div class="grid grid-cols-2 gap-3"><div class="min-w-0"><label class="text-xs text-textSub">航空公司</label><input type="text" id="flight-airline" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div><div class="min-w-0"><label class="text-xs text-textSub">代號</label><input type="text" id="flight-code" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div></div>
+                <div class="min-w-0"><label class="text-xs text-textSub">日期</label><input type="date" id="flight-date" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
+                <div><label class="text-xs text-accent font-bold">出發</label><div class="grid grid-cols-2 gap-3"><input type="time" id="flight-dep-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"><input type="text" id="flight-dep-port" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white" placeholder="機場/航廈"></div></div>
+                <div><label class="text-xs text-accent font-bold">抵達</label><div class="grid grid-cols-2 gap-3"><input type="time" id="flight-arr-time" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"><input type="text" id="flight-arr-port" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white" placeholder="機場/航廈"></div></div>
+                <div class="min-w-0"><label class="text-xs text-textSub">訂位代號</label><input type="text" id="flight-pnr" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white font-mono text-accent"></div>
+                <div class="min-w-0"><label class="text-xs text-textSub">連結</label><input type="text" id="flight-link" class="w-full bg-dark border border-slate-600 rounded-lg p-2.5 text-sm text-white"></div>
+            </div>
+            <div class="px-6 py-4 border-t border-white/10 flex-none flex gap-3 bg-card/50 backdrop-blur-md rounded-b-2xl">
+                <button onclick="deleteFlight()" id="btn-flight-delete" class="w-12 flex-none py-3 rounded-xl bg-red-500/10 text-red-400 border border-red-500/20 hidden flex items-center justify-center delete-trigger"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="closeFlightModal()" class="flex-1 py-3 rounded-xl bg-slate-700 text-slate-200">取消</button>
+                <button onclick="saveFlight()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="info-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <h3 class="text-lg font-bold mb-4 text-white"><i class="fa-solid fa-hotel text-subAccent"></i> <span id="info-modal-title">住宿資訊</span></h3>
+            <input type="hidden" id="info-id">
+            <div class="space-y-3">
+                <div><label class="text-xs text-textSub">名稱</label><input type="text" id="info-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div>
+                <div><label class="text-xs text-textSub">描述</label><input type="text" id="info-subtitle" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div>
+                <div><label class="text-xs text-textSub">地址</label><textarea id="info-address" rows="2" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></textarea></div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="deleteAccommodation()" id="btn-info-delete" class="w-12 flex-none py-3 rounded-xl bg-red-900/50 text-red-400 border border-red-500/20 hidden flex items-center justify-center delete-trigger"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="document.getElementById('info-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700 text-slate-200">取消</button>
+                <button onclick="saveAccommodation()" class="flex-1 py-3 rounded-xl bg-subAccent text-dark font-bold edit-trigger">儲存</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="park-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]"><div class="flex-none mb-4"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-ticket text-subAccent"></i> <span id="park-modal-title">票券資訊</span></h3></div><div class="flex-1 overflow-y-auto pr-2 space-y-3"><input type="hidden" id="park-id"><div><label class="text-xs text-textSub">標題</label><input type="text" id="park-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div><div><label class="text-xs text-textSub">地圖 Embed</label><input type="text" id="park-map" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div><div><label class="text-xs text-textSub">連結</label><div id="park-links-container" class="space-y-2"></div><button onclick="addParkLink()" class="mt-2 text-xs text-accent border border-accent/50 px-2 py-1 rounded edit-trigger">+ 連結</button></div><div><label class="text-xs text-textSub">說明</label><textarea id="park-desc" rows="3" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></textarea></div></div><div class="flex-none flex gap-3 mt-4"><button onclick="deletePark()" id="btn-park-delete" class="px-4 py-2 rounded bg-red-900/50 text-red-400 hidden delete-trigger"><i class="fa-solid fa-trash"></i></button><button onclick="document.getElementById('park-modal').classList.add('hidden')" class="flex-1 py-2 rounded bg-slate-700 text-slate-200">取消</button><button onclick="savePark()" class="flex-1 py-2 rounded bg-subAccent text-dark font-bold edit-trigger">儲存</button></div></div></div>
+
+    <div id="highlight-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-md rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]"><div class="flex-none mb-4"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-star text-blue-400"></i> <span id="highlight-modal-title">重點</span></h3></div><div class="flex-1 overflow-y-auto pr-2 space-y-3"><input type="hidden" id="highlight-id"><div><label class="text-xs text-textSub">大標題</label><input type="text" id="highlight-title" class="w-full bg-dark border border-slate-600 rounded-lg p-2 text-white"></div><div><label class="text-xs text-textSub">子項目</label><div id="highlight-items-container" class="space-y-2"></div><button onclick="addHighlightItem()" class="mt-2 text-xs text-accent border border-accent/50 px-2 py-1 rounded edit-trigger">+ 子項目</button></div></div><div class="flex-none flex gap-3 mt-4"><button onclick="deleteHighlight()" id="btn-highlight-delete" class="px-4 py-2 rounded bg-red-900/50 text-red-400 hidden delete-trigger"><i class="fa-solid fa-trash"></i></button><button onclick="document.getElementById('highlight-modal').classList.add('hidden')" class="flex-1 py-2 rounded bg-slate-700 text-slate-200">取消</button><button onclick="saveHighlight()" class="flex-1 py-2 rounded bg-blue-500 text-white font-bold edit-trigger">儲存</button></div></div></div>
+
+    <div id="date-settings-modal" class="fixed inset-0 bg-black/80 z-[65] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl"><h3 class="text-lg font-bold mb-4 text-white" id="date-modal-title">日期設定</h3><input type="hidden" id="date-modal-mode"><div class="mb-6"><label class="text-xs text-textSub block mb-1">選擇日期</label><input type="date" id="settings-day-date" class="w-full bg-dark border border-slate-600 rounded-lg p-3 text-white"></div><div class="flex gap-3"><button id="btn-delete-day" onclick="deleteCurrentDay()" class="hidden px-4 py-3 rounded-xl bg-red-900/30 text-red-400 delete-trigger"><i class="fa-solid fa-trash-can"></i></button><button onclick="document.getElementById('date-settings-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700">取消</button><button onclick="confirmDateSettings()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">確認</button></div></div></div>
+
+    <div id="json-modal" class="fixed inset-0 bg-black/80 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-sm"><div class="glass-modal w-full max-w-lg rounded-2xl p-6 shadow-2xl flex flex-col max-h-[90vh]"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-white"><i class="fa-solid fa-file-code text-subAccent"></i> 匯入 JSON</h3><button onclick="fillTemplate()" class="text-xs text-accent border border-accent/50 px-2 py-1 rounded">載入範本</button></div><textarea id="json-input" class="w-full flex-1 bg-dark border border-slate-600 rounded-lg p-3 text-white font-mono text-xs h-[300px] mb-6"></textarea><div class="flex gap-3"><button onclick="document.getElementById('json-modal').classList.add('hidden')" class="flex-1 py-3 rounded-xl bg-slate-700">取消</button><button onclick="confirmJsonImport()" class="flex-1 py-3 rounded-xl bg-accent text-white font-bold edit-trigger">確認</button></div></div></div>
 
     <script>
         const firebaseConfig = {
@@ -391,6 +465,26 @@
         let activeTab = 'plan'; 
         let activeDate = '';
         let weatherCache = {}; // Cache for weather data
+
+        // --- SCROLL HANDLER FOR HEADER HIDING ---
+        let lastScrollY = window.scrollY;
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > 60) { // Only trigger after scrolling down a bit
+                if (currentScrollY > lastScrollY) {
+                    // Scrolling Down
+                    document.body.classList.add('header-hidden');
+                } else {
+                    // Scrolling Up
+                    document.body.classList.remove('header-hidden');
+                }
+            } else {
+                // At top
+                document.body.classList.remove('header-hidden');
+            }
+            lastScrollY = currentScrollY;
+        });
+
 
         const iconTypes = {
             transport: { icon: 'fa-solid fa-suitcase-rolling', label: '交通' },
@@ -448,7 +542,7 @@
         }
 
         function logout() { auth.signOut(); }
-        function switchView(viewName) { document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active')); document.getElementById(`view-${viewName}`).classList.add('active'); }
+        function switchView(viewName) { document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active')); document.getElementById(`view-${viewName}`).classList.add('active'); window.scrollTo(0,0);}
 
         // --- DASHBOARD FUNCTIONS ---
 
@@ -471,15 +565,12 @@
             try {
                 if (CURRENT_USER.isAnonymous) {
                     // --- 訪客模式 ---
-                    // 隱藏「我的行程」區塊和新增按鈕
                     myTripsSection.classList.add('hidden');
                     fab.classList.add('hidden');
                     
-                    // 顯示「公開行程」區塊
                     publicSection.classList.remove('hidden');
                     publicContainer.innerHTML = '<p class="text-center text-slate-500 py-10">載入公開行程...</p>';
 
-                    // 查詢公開行程 (若報錯需建立索引: isPublic Asc + createdAt Desc)
                     const publicSnap = await db.collection('trips')
                         .where('isPublic', '==', true)
                         .orderBy('createdAt', 'desc')
@@ -513,7 +604,6 @@
 
             } catch (e) { 
                 console.error(e);
-                // 如果是因為缺少索引報錯，通常會在 Console 顯示連結
                 if(e.code === 'failed-precondition') {
                     alert("系統需要建立索引才能顯示行程，請查看 Console 或聯繫管理員。");
                 }
@@ -532,15 +622,13 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const el = document.createElement('div');
-                // 卡片本身可點擊 (selectTrip)
                 el.className = 'bg-card rounded-xl p-5 border border-slate-700 cursor-pointer hover:bg-slate-800 transition relative group active:scale-[0.98]';
                 el.onclick = () => selectTrip(doc.id, data);
                 
                 let actionsBtn = '';
                 
-                // 只有擁有者可以看到編輯與刪除按鈕 (訪客與協作者看不到刪除)
                 if (isOwner) {
-                     actionsBtn = `
+                      actionsBtn = `
                         <div class="flex gap-3 mt-4 pt-3 border-t border-slate-700/50 justify-end">
                             <button onclick="event.stopPropagation(); openEditTripInfo('${doc.id}', '${escapeHtml(data.title)}', '${escapeHtml(data.description)}')" class="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-600 hover:text-white transition flex items-center gap-1">
                                 <i class="fa-solid fa-pen"></i> 編輯
@@ -549,7 +637,7 @@
                                 <i class="fa-solid fa-trash"></i> 刪除
                             </button>
                         </div>
-                     `;
+                      `;
                 }
 
                 let badge = '';
@@ -577,7 +665,7 @@
                 if(doc.exists) {
                     const data = doc.data();
                     if(data.isPublic || (CURRENT_USER && data.createdBy === CURRENT_USER.uid) || (CURRENT_USER && data.collaborators?.includes(CURRENT_USER.email))) {
-                         selectTrip(doc.id, data);
+                          selectTrip(doc.id, data);
                     } else {
                         alert("此行程未公開，您無權限檢視");
                     }
@@ -649,11 +737,11 @@
         function escapeHtml(text) {
             if (!text) return "";
             return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
+                .replace(/&/g, "&")
+                .replace(/</g, "<")
+                .replace(/>/g, ">")
                 .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
+                .replace(/'/g, "'");
         }
 
         async function deleteTrip(tripId) { 
@@ -906,12 +994,12 @@
             const idx = sorted.indexOf(activeDate);
             document.getElementById('header-day-badge').innerText = idx >= 0 ? `DAY ${idx+1}` : "Trip";
             
-            // Removed Date Text, Updated Weather Logic
             updateWeatherDisplay();
         }
 
         function renderPlan(container) {
-            let html = `<div class="sticky top-[80px] z-30 bg-dark/95 backdrop-blur pb-3 pt-2 -mx-4 px-4 flex gap-2 overflow-x-auto no-scrollbar border-b border-white/5 mb-6 items-center">`;
+            // Apply the new 'date-sticky-bar' class here
+            let html = `<div class="date-sticky-bar flex gap-2 overflow-x-auto no-scrollbar items-center pb-3 pt-2 mb-6">`;
             Object.keys(tripData).sort().forEach(date => {
                 const isActive = date === activeDate;
                 const d = new Date(date);
