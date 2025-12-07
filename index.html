@@ -997,12 +997,14 @@
                 spanClass = 'col-span-2';
             }
 
-            buttonsHtml += `
-            <a href="javascript:void(0)" onclick="window.open('${act.url}', '_blank'); return false;"
-                class="${spanClass} ${act.colorClass} border border-slate-600/50 rounded-lg py-2.5 text-center text-xs font-bold transition flex items-center justify-center gap-2">
-                <i class="${act.icon}"></i> ${act.title}
-            </a>
-            `;
+            // 注意：這裡改成了 <button>，並使用 openExternal
+// 同時加入 replace(/'/g, "\\'") 避免網址內有單引號導致報錯
+buttonsHtml += `
+    <button onclick="openExternal('${act.url.replace(/'/g, "\\'")}')"
+        class="${spanClass} ${act.colorClass} border border-slate-600/50 rounded-lg py-2.5 text-center text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer">
+        <i class="${act.icon}"></i> ${act.title}
+    </button>
+`;
         });
         
         buttonsHtml += `</div>`;
@@ -1265,14 +1267,14 @@
         </div>
         
         <div class="text-center mt-10 mb-6 opacity-40 hover:opacity-80 transition-opacity select-none">
-            <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.1</p>
+            <p class="text-[10px] text-slate-500 font-mono tracking-wider">v1.0.2</p>
             <p class="text-[10px] text-slate-500 font-display font-bold mt-1">
                 Powered by <span class="text-accent">Hioklu</span>
             </p>
         </div>
     </div>`;
 }
-        // --- 版本資訊 ---
+        // --- 版號資訊 ---
         // --- CRUD / Logic ---
         function openDateSettings(m) { const mod=document.getElementById('date-settings-modal'); document.getElementById('date-modal-mode').value=m; const inp=document.getElementById('settings-day-date'); const del=document.getElementById('btn-delete-day'); if(m==='add'){ document.getElementById('date-modal-title').innerText='新增日期'; inp.value=''; del.classList.add('hidden'); }else{ document.getElementById('date-modal-title').innerText='編輯日期'; inp.value=activeDate; del.classList.remove('hidden'); } mod.classList.remove('hidden'); }
         async function saveEvent() {
@@ -1521,14 +1523,30 @@ async function performRefresh() {
 }
 
 // --- 強制使用 Safari 開啟外部連結 ---
+// --- 強制使用 Safari 開啟外部連結 (iOS PWA 專用修復版) ---
 function openExternal(url) {
     if (!url) return;
-    // 確保有 protocol，否則 window.open 可能會失敗或變成相對路徑
+    
+    // 1. 確保網址格式正確
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'https://' + url;
     }
-    // 'noopener,noreferrer' 有助於 iOS 判斷這是新視窗
-    window.open(url, '_blank', 'noopener,noreferrer');
+
+    // 2. 針對 iOS PWA 的特殊處理：建立隱藏連結並點擊
+    // 這種方式比 window.open 更能穩定地喚起 Safari
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('target', '_blank');
+    
+    // 設定 rel 屬性以增加安全性並提示瀏覽器為外部連結
+    a.setAttribute('rel', 'external noopener noreferrer');
+    
+    // 將元素暫時加入 DOM (iOS 某些版本需要元素在 DOM 中才能觸發點擊)
+    document.body.appendChild(a);
+    a.click();
+    
+    // 清理 DOM
+    document.body.removeChild(a);
 }
     
     </script>
