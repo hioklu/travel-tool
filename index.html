@@ -47,7 +47,7 @@
 
     <style>
         body {
-            background-color: #0f172a; /* Body background for PC borders */
+            background-color: #0f172a;
             color: #f8fafc;
             -webkit-tap-highlight-color: transparent;
             font-family: 'Noto Sans TC', sans-serif;
@@ -57,42 +57,43 @@
 
         /* --- PC / Adaptive Layout Wrapper --- */
         .mobile-wrapper {
-            max-width: 480px; /* Limit width on Desktop */
-            margin: 0 auto;   /* Center on Desktop */
+            max-width: 480px;
+            margin: 0 auto;
             background-color: #0f172a;
             min-height: 100vh;
             position: relative;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Shadow for desktop aesthetics */
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
             overflow-x: hidden;
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* --- Glassmorphism & Header Logic --- */
+        /* --- Glassmorphism --- */
         .glass-nav { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-top: 1px solid rgba(255, 255, 255, 0.05); }
         .glass-header { 
             background: rgba(15, 23, 42, 0.98); 
             backdrop-filter: blur(12px); 
             border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
-            transition: transform 0.3s ease-in-out; /* Smooth slide */
+            transition: transform 0.3s ease-in-out;
+            will-change: transform;
         }
         
         .glass-modal { background: rgba(30, 41, 59, 0.98); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
 
         /* --- Hide Header on Scroll Logic --- */
-        /* When body has .header-hidden, move header up */
         body.header-hidden .view-section.active header {
             transform: translateY(-100%);
         }
 
-        /* Date Bar Sticky Logic */
+        /* --- Sticky Date Bar Logic --- */
         .date-sticky-bar {
             position: sticky;
-            /* Default: Below the header (approx 80px + safe area) */
+            /* Default: Below the header (approx 70px header height) */
+            top: 70px; 
             top: calc(70px + env(safe-area-inset-top)); 
-            z-index: 40; /* Lower than modal, higher than content */
-            background: rgba(15, 23, 42, 0.95);
+            z-index: 40; 
+            background: rgba(15, 23, 42, 0.98); /* Less transparent to hide content behind */
             backdrop-filter: blur(12px);
             transition: top 0.3s ease-in-out;
             margin-left: -1rem; /* Counteract padding */
@@ -100,6 +101,8 @@
             padding-left: 1rem;
             padding-right: 1rem;
             border-bottom: 1px solid rgba(255,255,255,0.05);
+            /* Smooth scrolling for the container itself */
+            scroll-behavior: smooth;
         }
 
         /* When header is hidden, date bar moves to very top */
@@ -116,12 +119,10 @@
         .trip-card.normal { border-left-color: #64748b; }
         .nav-btn.active { color: #a56ce6; }
         
-        /* FAB Position needs to be absolute relative to wrapper */
         .fab { 
             position: fixed; 
             bottom: 80px; 
             right: 20px; 
-            /* On PC, align relative to the wrapper center */
             margin-right: calc((100vw - 480px) / 2);
             width: 56px; height: 56px; background-color: #a56ce6; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4); z-index: 40; transition: transform 0.2s; 
         }
@@ -145,21 +146,21 @@
         body.is-read-only .delete-trigger { display: none !important; }
         body.is-read-only #fab-add { display: none !important; }
         
-        /* Fix Nav Bar on PC */
-        .glass-nav {
+        .glass-nav, .glass-header {
             max-width: 480px;
             left: 50%;
             transform: translateX(-50%);
         }
-        .glass-header {
-            max-width: 480px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Override transform for hidden header to maintain centering logic */
+        body.header-hidden .view-section.active header {
+            transform: translate(-50%, -100%);
         }
     </style>
 </head>
 <body>
-<div class="mobile-wrapper"> <div id="loading-overlay">
+<div class="mobile-wrapper">
+
+    <div id="loading-overlay">
         <div class="flex flex-col items-center">
             <i class="fa-solid fa-plane-up fa-bounce text-4xl text-accent mb-4"></i>
             <p class="text-sm text-slate-400 font-mono">載入中...</p>
@@ -210,7 +211,7 @@
 
         <div class="mb-6 mt-4">
             <div class="flex gap-2">
-                <input type="text" id="search-trip-id" placeholder="輸入行程 ID 搜尋" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2.5 text-white focus:border-accent outline-none text-sm font-mono">
+                <input type="text" id="search-trip-input" placeholder="搜尋行程名稱 (模糊搜尋)" class="flex-1 bg-dark border border-slate-600 rounded-lg p-2.5 text-white focus:border-accent outline-none text-sm font-mono">
                 <button onclick="searchPublicTrip()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 rounded-lg"><i class="fa-solid fa-search"></i></button>
             </div>
         </div>
@@ -244,7 +245,7 @@
                 
                 <div class="flex flex-col justify-center min-w-0 pr-2">
                     <div class="flex items-center gap-2">
-                        <h1 class="font-display font-bold text-lg leading-tight tracking-tight text-white truncate cursor-pointer hover:text-accent" onclick="copyTripId()" id="app-trip-title">
+                        <h1 class="font-display font-bold text-lg leading-tight tracking-tight text-white truncate" id="app-trip-title">
                             Loading...
                         </h1>
                         <button onclick="openTripSettings()" id="btn-trip-settings" class="hidden text-slate-400 hover:text-accent text-xs flex-shrink-0"><i class="fa-solid fa-gear"></i></button>
@@ -287,7 +288,9 @@
         </nav>
     </section>
 
-</div> <div id="create-trip-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+</div>
+
+    <div id="create-trip-modal" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="glass-modal w-full max-w-sm rounded-2xl p-6 shadow-2xl">
             <h3 class="text-lg font-bold mb-4 text-white">建立新行程</h3>
             <div class="space-y-3">
@@ -330,11 +333,6 @@
             </div>
             
             <div class="space-y-6 overflow-y-auto">
-                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700">
-                    <label class="text-xs text-slate-400 block mb-1">行程 ID (點擊複製)</label>
-                    <div onclick="copyTripId()" class="font-mono text-sm text-accent break-all cursor-pointer hover:text-white transition" id="settings-trip-id"></div>
-                </div>
-
                 <div>
                     <h4 class="text-sm font-bold text-white mb-2">天氣地點設定</h4>
                     <div class="flex gap-2 mb-1">
@@ -362,6 +360,11 @@
                         <button onclick="addCollaborator()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 rounded-lg text-sm font-bold">新增</button>
                     </div>
                     <div id="collab-list" class="space-y-2 max-h-[150px] overflow-y-auto"></div>
+                </div>
+
+                <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-700 mt-4">
+                    <label class="text-xs text-slate-400 block mb-1">行程 ID (點擊複製)</label>
+                    <div onclick="copyTripId()" class="font-mono text-sm text-accent break-all cursor-pointer hover:text-white transition" id="settings-trip-id"></div>
                 </div>
 
                  <div class="pt-4 border-t border-slate-700">
@@ -657,24 +660,31 @@
         }
 
         async function searchPublicTrip() {
-            const id = document.getElementById('search-trip-id').value.trim();
-            if(!id) return alert("請輸入 ID");
+            const inputVal = document.getElementById('search-trip-input').value.trim();
+            if(!inputVal) return alert("請輸入行程名稱");
+            
             document.getElementById('loading-overlay').style.display = 'flex';
+            const container = document.getElementById('public-trips-container');
+            const publicSection = document.getElementById('public-trips-section');
+            
+            // Switch to Public view if not already there or clean it
+            publicSection.classList.remove('hidden');
+            
             try {
-                const doc = await db.collection('trips').doc(id).get();
-                if(doc.exists) {
-                    const data = doc.data();
-                    if(data.isPublic || (CURRENT_USER && data.createdBy === CURRENT_USER.uid) || (CURRENT_USER && data.collaborators?.includes(CURRENT_USER.email))) {
-                          selectTrip(doc.id, data);
-                    } else {
-                        alert("此行程未公開，您無權限檢視");
-                    }
-                } else {
-                    alert("找不到此行程");
+                // Implementation of Firestore Prefix Search: title >= input AND title <= input + '\uf8ff'
+                const snapshot = await db.collection('trips')
+                    .where('isPublic', '==', true)
+                    .where('title', '>=', inputVal)
+                    .where('title', '<=', inputVal + '\uf8ff')
+                    .get();
+
+                renderTripList(container, snapshot, false, true);
+                if(snapshot.empty) {
+                    container.innerHTML = `<div class="text-center text-slate-500 py-10">找不到標題包含 "${inputVal}" 的公開行程</div>`;
                 }
             } catch(e) {
                 console.error(e);
-                alert("搜尋失敗");
+                alert("搜尋失敗或需要建立索引 (請查看 Console)");
             } finally {
                 document.getElementById('loading-overlay').style.display = 'none';
             }
@@ -737,11 +747,11 @@
         function escapeHtml(text) {
             if (!text) return "";
             return text
-                .replace(/&/g, "&")
-                .replace(/</g, "<")
-                .replace(/>/g, ">")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
                 .replace(/"/g, "&quot;")
-                .replace(/'/g, "'");
+                .replace(/'/g, "&#039;");
         }
 
         async function deleteTrip(tripId) { 
@@ -997,6 +1007,14 @@
             updateWeatherDisplay();
         }
 
+        // New function to ensure the active date is visible
+        function scrollActiveDateIntoView() {
+            const activeBtn = document.querySelector('.date-sticky-bar button.bg-white');
+            if(activeBtn) {
+                activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }
+
         function renderPlan(container) {
             // Apply the new 'date-sticky-bar' class here
             let html = `<div class="date-sticky-bar flex gap-2 overflow-x-auto no-scrollbar items-center pb-3 pt-2 mb-6">`;
@@ -1043,6 +1061,9 @@
             }
             html += `</div>`;
             container.innerHTML = html;
+            
+            // Wait slightly for DOM to settle, then scroll active date into view
+            setTimeout(scrollActiveDateIntoView, 50);
         }
 
         function renderGuide(container) {
