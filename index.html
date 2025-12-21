@@ -120,7 +120,7 @@
             top: env(safe-area-inset-top);
         }
 
-        /* 修改後的 timeline-line */
+        /* Timeline line */
         .timeline-line {
             width: 2px;
             background-color: #334155;
@@ -194,14 +194,14 @@
             box-shadow: none; 
             border-left-width: 5px;
         }
-        /* --- Feature 3: 重要行程卡片樣式修正 --- */
+        
+        /* Important Card Style */
         .trip-card.important {
             background: linear-gradient(130deg, #2d1f42f8 0%, #1e293b 60%,#1e293b 100%) !important; 
             border-left-color: #c4b5fd !important; 
         }
         
         .trip-card.important h3{
-            /* 設定標題為淺紫色 (Tailwind purple-300) */
             color: #bb86f3 !important; 
             text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         } 
@@ -209,6 +209,23 @@
         .trip-card.important .fa-clock,
         .trip-card.important span {
             text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        /* --- Date Switch Animations --- */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideInLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .animate-slide-next {
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        .animate-slide-prev {
+            animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
     </style>
 </head>
@@ -538,6 +555,7 @@
         let activeTab = 'plan'; 
         let activeDate = '';
         let weatherCache = {};
+        let isCardInteract = false; // 新增：防止與卡片刪除衝突
 
         // --- SCROLL HANDLER FOR HEADER HIDING ---
         // Logic: Always hide when scrolling down. Only show when at absolute top.
@@ -710,7 +728,6 @@
             document.getElementById('new-trip-title').value=''; document.getElementById('new-trip-desc').value=''; document.getElementById('create-trip-modal').classList.remove('hidden'); 
         }
         
-        // --- 新增：處理行程連結的輸入框 ---
         function addEventLinkInput(title = '', url = '') {
             const container = document.getElementById('edit-event-links-container');
             const div = document.createElement('div');
@@ -788,7 +805,11 @@
                 flightData = []; flightSnap.forEach(doc => flightData.push({...doc.data(), docId: doc.id}));
                 parkData = []; parkSnap.forEach(doc => parkData.push({...doc.data(), docId: doc.id}));
                 highlightData = []; highSnap.forEach(doc => highlightData.push({...doc.data(), docId: doc.id}));
-                setInitialDate(); renderHeaderInfo(); switchTab(activeTab); // Reload current tab
+                
+                setInitialDate(); 
+                renderHeaderInfo(); 
+                setupDateSwipe(); // Setup swipe listener
+                switchTab(activeTab); // Reload current tab
             } catch(e) { console.error(e); alert("載入失敗"); backToDashboard(); }
             finally { document.getElementById('loading-overlay').style.display = 'none'; }
         }
@@ -881,14 +902,14 @@
         }
 
         // Auto Scroll to Date Button if cutoff
-        function changeDate(date) {
+        function changeDate(date, direction = null) {
             const oldBar = document.querySelector('.date-sticky-bar');
             const oldScrollLeft = oldBar ? oldBar.scrollLeft : 0;
 
             activeDate = date; 
             renderHeaderInfo(); 
             
-            renderPlan(document.getElementById('app'));
+            renderPlan(document.getElementById('app'), direction);
 
             const newBar = document.querySelector('.date-sticky-bar');
             const btn = newBar ? newBar.querySelector(`button[onclick="changeDate('${date}')"]`) : null;
@@ -913,7 +934,7 @@
             }
         }
 
-        function renderPlan(container) {
+        function renderPlan(container, direction = null) {
             let html = `<div class="date-sticky-bar flex gap-2 overflow-x-auto no-scrollbar items-center pb-3 pt-2 mb-6">`;
             Object.keys(tripData).sort().forEach(date => {
                 const isActive = date === activeDate; const d = new Date(date); const display = `${d.getMonth()+1}/${d.getDate()} ${getWeekday(date)}`;
@@ -921,8 +942,14 @@
             });
             html += `<div class="flex gap-2 ml-1 edit-trigger"><button onclick="openDateSettings('edit')" class="w-10 h-10 rounded-full border border-slate-600 bg-slate-800 text-slate-400 flex items-center justify-center hover:bg-slate-700 transition"><i class="fa-solid fa-gear"></i></button><button onclick="openDateSettings('add')" class="w-10 h-10 rounded-full border border-dashed border-slate-500 text-slate-400 flex items-center justify-center hover:bg-slate-800 hover:text-white transition"><i class="fa-solid fa-plus"></i></button></div></div>`;
             
+            // Apply animation class based on direction
+            let animationClass = 'animate-[fadeIn_0.3s_ease-out]';
+            if (direction === 'next') animationClass = 'animate-slide-next';
+            if (direction === 'prev') animationClass = 'animate-slide-prev';
+
             const events = (tripData[activeDate] || []).sort((a, b) => a.time.localeCompare(b.time));
-            html += `<div class="pb-24 animate-[fadeIn_0.3s_ease-out]">`;
+            html += `<div id="plan-content" class="pb-24 ${animationClass}">`;
+            
             if(events.length === 0) { html += `<div class="flex flex-col items-center justify-center mt-20 text-slate-600 space-y-4"><i class="fa-regular fa-calendar-xmark text-4xl"></i><p>本日尚無行程</p></div>`; }
             else {
                 events.forEach(item => {
@@ -1009,14 +1036,15 @@
             attachSwipeHandlers();
         }
 
-        // --- SWIPE LOGIC ---
+        // --- SWIPE LOGIC (Updated for Conflict Resolution) ---
         function attachSwipeHandlers() {
             if(IS_READ_ONLY) return;
             const elements = document.querySelectorAll('.swipe-content');
             elements.forEach(el => {
-                let startX, startY, dist, isScrolling;
+                let startX, startY, isScrolling;
                 
                 el.addEventListener('touchstart', (e) => {
+                    isCardInteract = true; // 標記正在與卡片互動
                     startX = e.touches[0].clientX;
                     startY = e.touches[0].clientY;
                     el.style.transition = 'none'; 
@@ -1035,11 +1063,14 @@
                     const diffX = touchX - startX;
                     const diffY = touchY - startY;
 
+                    // 如果垂直移動幅度大，則視為捲動，不處理卡片滑動
                     if (Math.abs(diffX) < Math.abs(diffY)) {
                         isScrolling = true;
+                        isCardInteract = false; // 放開卡片鎖定，允許頁面捲動
                         return; 
                     }
                     
+                    // 只有向左滑 (顯示刪除) 才攔截
                     if (diffX < 0) { 
                         const translate = Math.max(diffX, -100); 
                         el.style.transform = `translateX(${translate}px)`;
@@ -1055,7 +1086,57 @@
                         el.style.transform = 'translateX(0)';
                     }
                     isScrolling = false;
+                    
+                    // 延遲釋放鎖定，避免誤觸換頁
+                    setTimeout(() => { isCardInteract = false; }, 100);
                 });
+            });
+        }
+
+        // --- PAGE SWIPE (Date Switching) ---
+        function setupDateSwipe() {
+            const container = document.getElementById('view-main-app');
+            let startX = 0;
+            let startY = 0;
+            const THRESHOLD = 80; // 滑動門檻
+
+            container.addEventListener('touchstart', (e) => {
+                // 如果正在操作下拉刷新或卡片刪除，不偵測換頁
+                if (isDragging || isCardInteract) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, {passive: true});
+
+            container.addEventListener('touchend', (e) => {
+                // 如果正在操作下拉刷新或卡片刪除，不偵測換頁
+                if (isDragging || isCardInteract) return;
+
+                const endX = e.changedTouches[0].clientX;
+                const endY = e.changedTouches[0].clientY;
+                const diffX = endX - startX;
+                const diffY = endY - startY;
+
+                // 確保是水平滑動 (X軸位移 > Y軸位移) 且 超過門檻
+                if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > THRESHOLD) {
+                    // 取得所有日期並排序
+                    const sortedDates = Object.keys(tripData).sort();
+                    const currentIndex = sortedDates.indexOf(activeDate);
+                    
+                    if (currentIndex === -1) return;
+
+                    // 滑動方向邏輯
+                    if (diffX < 0) {
+                        // 向左滑 (手指由右向左) -> 下一天
+                        if (currentIndex < sortedDates.length - 1) {
+                            changeDate(sortedDates[currentIndex + 1], 'next');
+                        }
+                    } else {
+                        // 向右滑 (手指由左向右) -> 上一天
+                        if (currentIndex > 0) {
+                            changeDate(sortedDates[currentIndex - 1], 'prev');
+                        }
+                    }
+                }
             });
         }
 
@@ -1432,36 +1513,35 @@
             }
         }
 
-        // --- 強制使用 Safari 開啟外部連結 (iOS PWA 專用修復版) ---
         // --- 強制使用 Safari 開啟外部連結 (修正版) ---
-function openExternal(url) {
-    if (!url) return;
-    
-    // 1. 確保網址格式正確
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-    }
+        function openExternal(url) {
+            if (!url) return;
+            
+            // 1. 確保網址格式正確
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
 
-    // 2. 偵測是否為 iOS PWA 模式 (Standalone)
-    const isStandalone = ('standalone' in window.navigator) && (window.navigator.standalone);
+            // 2. 偵測是否為 iOS PWA 模式 (Standalone)
+            const isStandalone = ('standalone' in window.navigator) && (window.navigator.standalone);
 
-    if (isStandalone) {
-        // 在 iOS PWA 模式下：
-        // 方法 A: 使用 window.open (大部分情況會開啟子視窗/In-App Browser)
-        // 方法 B: 如果您希望它"跳出" App 到 Safari，通常需要該網址不在 Scope 內
-        // 由於您沒有 manifest.json，最穩定的方式是用 window.open
-        window.open(url, '_blank');
-    } else {
-        // 一般瀏覽器模式
-        const a = document.createElement('a');
-        a.setAttribute('href', url);
-        a.setAttribute('target', '_blank');
-        a.setAttribute('rel', 'external noopener noreferrer');
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-}
+            if (isStandalone) {
+                // 在 iOS PWA 模式下：
+                // 方法 A: 使用 window.open (大部分情況會開啟子視窗/In-App Browser)
+                // 方法 B: 如果您希望它"跳出" App 到 Safari，通常需要該網址不在 Scope 內
+                // 由於您沒有 manifest.json，最穩定的方式是用 window.open
+                window.open(url, '_blank');
+            } else {
+                // 一般瀏覽器模式
+                const a = document.createElement('a');
+                a.setAttribute('href', url);
+                a.setAttribute('target', '_blank');
+                a.setAttribute('rel', 'external noopener noreferrer');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
     </script>
 </body>
 </html>
