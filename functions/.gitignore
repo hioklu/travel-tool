@@ -1,6 +1,0 @@
-node_modules/
-*.local
-.env
-*.log
-firebase-debug-*.log
-test_output.txt
