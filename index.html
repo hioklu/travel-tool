@@ -1027,7 +1027,15 @@
             const title = document.getElementById('new-trip-title').value; const desc = document.getElementById('new-trip-desc').value;
             if (!title) return alert("請輸入標題");
             try {
-                await db.collection('trips').add({ title, description: desc, createdAt: firebase.firestore.FieldValue.serverTimestamp(), createdBy: CURRENT_USER.uid, collaborators: [], isPublic: false });
+                await db.collection('trips').add({
+                    title,
+                    description: desc,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdBy: CURRENT_USER.uid,
+                    collaborators: [],
+                    isPublic: false
+                });
                 document.getElementById('create-trip-modal').classList.add('hidden'); loadTripsList();
             } catch (e) { alert("建立失敗"); }
         }
@@ -1045,7 +1053,20 @@
             const desc = document.getElementById('edit-trip-info-desc').value;
             if (!title) return alert("標題不能為空");
             document.getElementById('loading-overlay').style.display = 'flex';
-            try { await db.collection('trips').doc(id).update({ title: title, description: desc }); document.getElementById('edit-trip-info-modal').classList.add('hidden'); loadTripsList(); } catch (e) { console.error(e); alert("更新失敗"); } finally { document.getElementById('loading-overlay').style.display = 'none'; }
+            try {
+                await db.collection('trips').doc(id).update({
+                    title: title,
+                    description: desc,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById('edit-trip-info-modal').classList.add('hidden');
+                loadTripsList();
+            } catch (e) {
+                console.error(e);
+                alert("更新失敗");
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
         }
 
         function escapeHtml(text) {
@@ -1428,7 +1449,10 @@
             if (confirm("確定刪除此行程?")) {
                 tripData[activeDate] = tripData[activeDate].filter(e => e.id !== id);
                 renderPlan(document.getElementById('app'));
-                await getTripRef().collection('itinerary').doc(activeDate).set({ events: tripData[activeDate] });
+                await getTripRef().collection('itinerary').doc(activeDate).set({
+                    events: tripData[activeDate],
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
             } else {
                 renderPlan(document.getElementById('app'));
             }
